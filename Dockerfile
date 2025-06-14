@@ -3,6 +3,7 @@ FROM python:3.11-alpine
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=FileReader.settings
 
 # Install dependencies
 RUN apk update && apk add --no-cache \
@@ -29,4 +30,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /code/
 
 # Run the server
-CMD ["gunicorn", "FileReader.FileReader.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "FileReader.wsgi:application", "--bind", "0.0.0.0:8000"]
