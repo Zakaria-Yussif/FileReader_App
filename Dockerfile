@@ -1,18 +1,32 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
-# Install system dependencies if needed (e.g., libmagic, libpoppler)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpoppler-cpp-dev \
-    libmagic-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+# Install dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    poppler-utils \
+    libmagic \
+    libffi-dev \
+    musl-dev \
+    gcc \
+    python3-dev \
+    jpeg-dev \
+    zlib-dev \
+    && pip install --upgrade pip
+
+# Set work directory
 WORKDIR /code
 
-COPY requirements.txt requirements-core.txt requirements-data.txt requirements-files.txt requirements-utils.txt /code/
-
+# Copy and install requirements
+COPY requirements*.txt /code/
+COPY requirements.txt /code/
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the project files
 COPY . /code/
 
+# Run the server
 CMD ["gunicorn", "FileReader.wsgi:application", "--bind", "0.0.0.0:8000"]
