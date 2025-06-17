@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-vj1rud37wngvgw11%3(b12-*m3)_2a0x=!*b8x%er3dr5!s6#+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS =  [os.getenv('RAILWAY_STATIC_URL', 'localhost')]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', os.getenv('RAILWAY_STATIC_URL', 'localhost')]
+
 
 
 # Application definition
@@ -38,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "myFileReader",
+    "FileReader.myFileReader",
 ]
 
 MIDDLEWARE = [
@@ -55,18 +56,19 @@ ROOT_URLCONF = 'FileReader.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',  # ✅ fixed line
+        'DIRS': [BASE_DIR / "templates"],  # ✅ this is fine, just make sure the folder exists
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
+                'django.template.context_processors.request',  # ✅ fixed line
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'FileReader.wsgi.application'
 

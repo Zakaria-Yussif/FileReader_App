@@ -4,6 +4,9 @@ FROM python:3.11-alpine
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=FileReader.FileReader.settings
+ENV DJANGO_URLS_MODULE=FileReader.FileReader.urls
+
+
 
 # Install dependencies
 RUN apk update && apk add --no-cache \
