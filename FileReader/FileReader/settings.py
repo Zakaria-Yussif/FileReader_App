@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'FileReader.urls'
+ROOT_URLCONF = 'FileReader.FileReader.urls'
 
 TEMPLATES = [
     {
