@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-vj1rud37wngvgw11%3(b12-*m3)_2a0x=!*b8x%er3dr5!s6#+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', "filereaderapp-production.up.railway.appc"]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', os.getenv('RAILWAY_STATIC_URL', 'localhost')]
 
 
 
@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "myFileReader",
+    "FileReader.myFileReader",
 ]
 
 MIDDLEWARE = [

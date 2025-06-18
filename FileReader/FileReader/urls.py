@@ -19,6 +19,6 @@ from django.urls import path, include  # include is important!
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('myFileReader.urls')),  # include your app’s URLs
+    path('', include('FileReader.myFileReader.urls')),  # include your app’s URLs
 ]
 
