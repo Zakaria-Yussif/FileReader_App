@@ -170,7 +170,8 @@ button:hover {
     height: 89vh;
               box-shadow: 0px 3px 0px 0px rgba(13, 5, 1, 0.1);
               border-bottom: 1px solid grey;
-              display: flex; flex-direction: column;
+              display: flex;
+    flex-direction: column;
 }
 
 /* Typing Animation */
@@ -194,50 +195,90 @@ Ensure Visibility
     opacity: 1;
 }
 
-
-@media (max-width: 1008px) {
-    #sidebarCollapse {
-      display: none !important;
-        width: 100%;
-    }
-    .body{
-        display: grid;
-        grid-template-columns:99% 0%;
-        height: 90vh;
-        width: 100%;
-    }
-    .main-container{
-        width: 100% !important;
-        height: 80vh;
-        overflow-y: scroll;
-        padding-right: 10px;
-        maegin-left: 1000px;
-    }
+@media(max-width: 1008px){
 
     #form{
-        width: 100% !important;
-        position: relative;
+        min-width: 90vw;
+        /*justify-content: center;*/
+    }
+    .body{
+    display: grid;
+    grid-template-columns: 0% 100%;
+        position: fixed;
+
+    max-height: 89vh;
+
+
+}
+    .form-control{
+        min-width: 100%;
+
+
 
 
     }
-    #message{
-        width: 500px !important;
-        justify-content: center;
-        position: absolute;
+    #sidebarCollapse{
+   height: 20px;
+        width: 0;
+        visibility: hidden;
+        overflow: hidden;
+
+
 
     }
-    #upload_data{
-        display: block;
-        width: 100px !important;
-        margin-right: 100% !important;
-    }
-
-    #button{
-        margin-left: 50% !important;
+    .main-container{
+        /*left: 1000px;*/
+        width:100%;
 
     }
+#button-group{
+    margin-left: 100px;
+}
 
-  }
+}
+/*@media (max-width: 1008px) {*/
+/*    #sidebarCollapse {*/
+/*      display: none !important;*/
+/*        width: 100%;*/
+/*    }*/
+/*    .body{*/
+/*        display: grid;*/
+/*        grid-template-columns:99% 0%;*/
+/*        height: 90vh;*/
+/*        width: 100%;*/
+/*    }*/
+/*    .main-container{*/
+/*        width: 100% !important;*/
+/*        height: 80vh;*/
+/*        overflow-y: scroll;*/
+/*        padding-right: 10px;*/
+/*        maegin-left: 1000px;*/
+/*    }*/
+
+/*    #form{*/
+/*        width: 100% !important;*/
+/*        position: relative;*/
+
+
+/*    }*/
+/*    #message{*/
+/*        width: 500px !important;*/
+/*        justify-content: center;*/
+/*        position: absolute;*/
+
+/*    }*/
+/*    #upload_data{*/
+/*        display: block;*/
+/*        width: 100px !important;*/
+/*        margin-right: 100% !important;*/
+/*    }*/
+
+/*    #button{*/
+/*        margin-left: 50% !important;*/
+
+/*    }*/
+
+/*  }*/
 
 </style>
 
@@ -361,6 +402,7 @@ Ensure Visibility
             <p>{{ item.website.mainHeaders }}</p>
             <p>{{ item.website.mainContent }}</p>
             <p><strong>📖 Content:</strong> {{ item.website.paragraph }}</p>
+            <p>dkdkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk</p>
         </div>
 
         <h2>{{ item.website.complete }}</h2>
@@ -659,7 +701,7 @@ Ensure Visibility
             {% csrf_token %}
 
             <!-- Container for textarea and file input -->
-            <div class="input-group mb-3" style="margin: 10px; box-shadow: 6px 3px 3px 3px rgb(13, 5, 1, 0.1); display: flex; background-color: azure; position: relative;">
+            <div class="input-group mb-3 " id="button-group" style="margin: 10px; box-shadow: 6px 3px 3px 3px rgb(13, 5, 1, 0.1); display: flex; background-color: azure; position: relative;">
                 <!-- Textarea for message -->
 
                 <textarea class="form-control" name="message" id="message" placeholder="Type your message here..." style="border-style: none; width: 100%; padding-right: 30px;"></textarea>
