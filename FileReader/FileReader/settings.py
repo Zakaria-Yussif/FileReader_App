@@ -30,6 +30,12 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost', os.getenv('RAILWAY_STATIC_URL', 'loca
 
 
 
+# API keys from .env or Render env vars
+LOCATION_KEY = os.getenv('LOCATION_KEY')
+WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+CSE_ID = os.getenv('CSE_ID')
+
 # Application definition
 
 INSTALLED_APPS = [

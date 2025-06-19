@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
 from sympy import symbols, Eq, solve, simplify, pretty, sympify
-from .model import PlotImage
+# from .model import PlotImage
 
 
 GOOGLE_API_KEY = settings.GOOGLE_API_KEY

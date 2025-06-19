@@ -29,6 +29,8 @@ import cmath
 import math
 # from adodbapi.examples.xls_read import filename
 from transformers import pipeline
+from googletrans import Translator
+
 from bs4 import BeautifulSoup
 from googletrans import LANGUAGES
 
@@ -39,12 +41,14 @@ from django.http import JsonResponse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from PyPDF2 import PdfReader
-from .model import PlotImage
+# from .model import PlotImage
 import langcodes
-from googletrans import Translator
+# from googletrans import Translator
+from deep_translator import GoogleTranslator
 
 
-from .forms import RegisterForm  # Assuming RegisterForm is defined in your forms.py
+
+# from .forms import RegisterForm  # Assuming RegisterForm is defined in your forms.py
 
 
 # Home view
@@ -74,12 +78,12 @@ nlp = spacy.load("en_core_web_sm")
 def index(request):
     """Render the homepage with stored messages"""
 
-    if PlotImage.objects.exists():
-        print("image exists")
-        image = PlotImage.objects.all()
-        print("image", image    )
-    else:
-        print("image does not exist")
+    # if PlotImage.objects.exists():
+    #     print("image exists")
+    #     image = PlotImage.objects.all()
+    #     print("image", image    )
+    # else:
+    #     print("image does not exist")
 
     default_message = "Write Something OR upload a file \nYou can upload pdf files, solve linear/quadratic equations and generate bar graphs"
 
@@ -99,18 +103,18 @@ def index(request):
 
     print("Current session messageData:", messageData)
 
-    return render(request, 'myFileApp/index.html', {'messageData': messageData})
+    return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 # def read_excel_file():
 #     print("Reading Excel File")
 
 
-def retrieved_data(request):
-    if PlotImage.objects.exists():
-        print("PlotImage.objects.exists()")
-    else:
-        print("PlotImage.donot.exists()")
+# def retrieved_data(request):
+#     if PlotImage.objects.exists():
+#         print("PlotImage.objects.exists()")
+#     else:
+#         print("PlotImage.donot.exists()")
    #     data= PlotImage.objects.all(image=request.FILES['image'])
    # print("retrieved_data", data)
    # graphData.append(data)
@@ -179,7 +183,7 @@ def submit_message(request):
 
         if not data_input:
             messageData.append({"message": "⚠️ Please enter a valid sentence!"})
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         message = deepcopy(data_input)
 
@@ -208,7 +212,7 @@ def submit_message(request):
 
             messageData.append({"translated": trans_message })
             request.session['messageData'] = messageData
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         if pattern:
             from .mathModel import predict
@@ -230,7 +234,7 @@ def submit_message(request):
 
 
 
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
         elif match_translate:
              from .mathModel import solve_math
              data_inputData=solve_math(data_input)
@@ -265,12 +269,12 @@ def submit_message(request):
                 from .drawShapes import draw_square
                 messageData = draw_square(messageData)
                 request.session['messageData'] = messageData
-                return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
             elif match_draw_rectangle:
                 from .drawShapes import draw_rectangle
                 messageData = draw_rectangle(messageData)
                 request.session['messageData'] = messageData
-                return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 
@@ -384,13 +388,13 @@ def submit_message(request):
             request.session["messageData"] = updated_messageData
 
             # Render with updated context
-            return render(request, 'myFileApp/index.html', {'messageData': updated_messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': updated_messageData})
 
         elif Bar_match:
             from .utils import generate_barChart
             messageData = request.session.get('messageData', [])
             messageData=generate_barChart(data_input,messageData, request.session['messageData'])
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
                 # LINEAR EQUATIO
         elif match_linear:
@@ -400,19 +404,19 @@ def submit_message(request):
             print("data_input",data_input)
             messageData = request.session.get('messageData', [])
             messageData=linear_equation(data_input,match_linear, messageData, request.session['messageData'])
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         elif match_quadratic:
             from .utils import quadratic
             messageData = request.session.get('messageData', [])
             messageData=quadratic(data_input,match_quadratic,messageData, request.session['messageData'])
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         elif match_quadratic_two:
             from .utils import quadratic_two
             messageData = request.session.get('messageData', [])
             messageData=quadratic_two(data_input,match_quadratic_two,messageData, request.session['messageData'])
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         else:
             from .utils import google_search
@@ -432,7 +436,7 @@ def submit_message(request):
             if messageInfo:
                 messageData.append({"message": messageInfo})
                 request.session["messageData"] = messageData
-                return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
             # If prediction did not occur (fallback to pattern matching)
             from .chat import pairs
@@ -495,7 +499,7 @@ def submit_message(request):
 
 
 
-                        return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 
@@ -606,13 +610,13 @@ def submit_message(request):
 
             except Exception as e:
                 messageData.append({"message": f"⚠️ Error during prediction: {str(e)}"})
-                return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 
                 # Set messageInfo if prediction is successful
 
-        return render(request, 'myFileApp/index.html', {'messageData': messageData})
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 def clear_message_data(request):
@@ -647,7 +651,7 @@ def upload_datafiles(request):
         request.session["messageData"] = messageData
 
         # Render the updated message data to the template
-        return render(request, 'myFileApp/index.html', {'messageData': messageData})
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 def register(request):
     if request.method == "POST":
