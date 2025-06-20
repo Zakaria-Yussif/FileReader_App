@@ -1,4 +1,4 @@
-version: '3.9'
+# version: '3.9'  # Optional – can be removed
 
 services:
   web:
@@ -11,6 +11,12 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    environment:
+      - POSTGRES_DB=mydb
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - DJANGO_SETTINGS_MODULE=FileReader.FileReader.settings
+      - DJANGO_URLS_MODULE=FileReader.FileReader.urls
 
   db:
     image: postgres:15
@@ -18,3 +24,8 @@ services:
       POSTGRES_DB: mydb
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

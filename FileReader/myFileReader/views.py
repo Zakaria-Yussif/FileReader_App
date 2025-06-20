@@ -235,16 +235,17 @@ def submit_message(request):
 
 
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
-        elif match_translate:
-             from .mathModel import solve_math
-             data_inputData=solve_math(data_input)
-             print("data_input",data_input)
-             content={
-                 "equation": data_input,
-                 "step3": data_inputData,
-                 "answer": data_inputData,
-             }
-             messageData.append({"solution":content})
+        # elif math_model:
+        #      from .mathModel import solve_math
+        #      data_inputData=solve_math(data_input)
+        #      print("data_input",data_input)
+        #      content={
+        #          "equation": data_input,
+        #          "step3": data_inputData,
+        #          "answer": data_inputData,
+        #      }
+        #      messageData.append({"solution":content})
+
 
         elif match_drawShapes:
             messageData = request.session.get('messageData', [])
