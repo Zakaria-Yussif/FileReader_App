@@ -1,28 +1,23 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=FileReader.FileReader.settings
-ENV DJANGO_URLS_MODULE=FileReader.FileReader.urls
-
+# system deps ...
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    poppler-utils \
-    libmagic1 \
-    libffi-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --upgrade pip
+    build-essential poppler-utils libmagic1 libffi-dev libjpeg-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /code
 
 COPY requirements.txt /code/
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install torch separately with the official index URL
+RUN pip install --upgrade pip
+RUN pip install torch==2.7.1+cpu --index-url https://download.pytorch.org/whl/cpu
+
+# Then install rest of the requirements excluding torch
+RUN grep -v 'torch' requirements.txt > requirements_no_torch.txt
+RUN pip install --no-cache-dir -r requirements_no_torch.txt
 
 COPY . /code/
 
 EXPOSE 8000
-
-CMD ["gunicorn", "FileReader.FileReader.wsgi:application", "--bind",", "0.0.0.0:8000"]
+CMD ["gunicorn", "FileReader.FileReader.wsgi:application", "--bind", "0.0.0.0:8000"]
