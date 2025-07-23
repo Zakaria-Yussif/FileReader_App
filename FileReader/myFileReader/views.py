@@ -214,16 +214,16 @@ def submit_message(request):
             request.session['messageData'] = messageData
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-        if pattern:
-            from .mathModel import predict
-            data_inputData=predict(question=data_input)
-            print("data_input",data_input)
-            content={
-                "equation": data_input,
-                "step3": data_inputData,
-                "answer": data_inputData,
-            }
-            messageData.append({"solution":content})
+        # if pattern:
+        #     from .mathModel import predict
+        #     data_inputData=predict(question=data_input)
+        #     print("data_input",data_input)
+        #     content={
+        #         "equation": data_input,
+        #         "step3": data_inputData,
+        #         "answer": data_inputData,
+        #     }
+        #     messageData.append({"solution":content})
 
 
         if match_essay:
@@ -423,6 +423,10 @@ def submit_message(request):
             from .utils import google_search
             messageData = request.session.get('messageData', [])
 
+            findOne = "(how do|what's the method for) calculating the area of a triangle\??"
+            findTwo = "how can I (find|calculate) the area of a triangle\??"
+            findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
+            findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
 
             doc = nlp(data_input)
             has_subject, has_verb, has_object = (False, False, False)
@@ -451,7 +455,7 @@ def submit_message(request):
 
 
             # If a pattern match is found
-            if score > 55:
+            if score > 80:
                 for pattern, response in pairs:
                     if pattern == best_match:
 
@@ -459,16 +463,26 @@ def submit_message(request):
                         messageData.append({"message": response[0]})
                         request.session['messageData'] = messageData
 
+                        weather_pattern = r"""(?ix)                 # ignore case, allow verbose mode
+                            \b(
+                                (what('|s| is)?\s*(the\s*)?(weather|forecast|weather\s+report)) |
+                                (can|could|will|would|do|does)\s+you\s+(tell|give)\s+me\s+(the\s*)?(weather|forecast) |
+                                (is|was|will|would|does|do|did|are|am|were|being|be|has|have|had)\s+(it|the\s+weather)\s+(like|raining|snowing|sunny|cloudy|hot|cold|windy|nice) |
+                                (rain|snow|sun|sunny|clouds|cloudy|storm|hot|cold|temperature|windy|humidity)
+                            )
+                            (
+                                \s+(today|tomorrow|tonight|this\s+(morning|afternoon|evening|weekend)|on\s+\w+day)?
+                            )?
+                            (
+                                \s+(in|for)\s+[a-zA-Z\s]+     # simple location capture
+                            )?
+                            \??
+                        """
+                        findOne = "(how do|what's the method for) calculating the area of a triangle\??"
+                        findTwo = "how can I (find|calculate) the area of a triangle\??"
+                        findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
+                        findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
 
-
-
-                        weather_pattern = r"(what('| i)?s|tell me)?\s*(the\s*)?(weather|forecast)(\s+like)?(\s+today)?\??"
-
-
-                        findOne="(how do|what's the method for) calculating the area of a triangle\??"
-                        findTwo="how can I (find|calculate) the area of a triangle\??"
-                        findRectangle="(how do|what's the method for) calculating the area of a rectangle\??"
-                        findRectangleTwo=" how can I (find|calculate) the area of a rectangle\??"
 
 
 
@@ -476,7 +490,7 @@ def submit_message(request):
                         search_weather_pattern= re.search(weather_pattern, best_match, re.IGNORECASE)
 
 
-                        if search_weather_pattern:
+                        if search_weather_pattern  or "weather" in response[0].lower():
                             from .api import get_weather, get_location
                             city = get_location()
 
@@ -485,6 +499,8 @@ def submit_message(request):
                                 print("weather", weather)
                                 messageData.append({"weather": weather})
                                 request.session['messageData'] = messageData
+
+
                         elif best_match == findOne or best_match == findTwo:
                             from .drawShapes import draw_triangle
                             messageData = draw_triangle(messageData)
