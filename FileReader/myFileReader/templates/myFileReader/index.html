@@ -630,7 +630,7 @@ Ensure Visibility
 
             {% endif %}
 
-
+<p class="message_display">{{ item.last_Data   }}</p>
 
 
 <script>
@@ -756,6 +756,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadText = "Uploading...";
     const uploadDocument = "Upload";
 
+
+
     // Toggle file upload input visibility
     fileIcon.addEventListener("click", () => {
         fileData.style.display = fileData.style.display === "none" ? "block" : "none";
@@ -768,6 +770,9 @@ document.addEventListener("DOMContentLoaded", () => {
         fileInput. enctype="multipart/form-data";
         fileInput.accept = "*/*"; // Accept any file type
         fileInput.style.display = "none";
+
+
+
 
         document.body.appendChild(fileInput);
         fileInput.click(); // Open file dialog
@@ -826,6 +831,22 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
+
+        <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form");
+    const container = document.querySelector(".main-container");
+
+    form.addEventListener("submit", () => {
+      // Give the browser a moment to insert the new message
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 50);
+    });
+  });
+</script>
+
+
 
 
     </div>

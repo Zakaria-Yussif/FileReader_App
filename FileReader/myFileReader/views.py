@@ -127,19 +127,28 @@ def submit_message(request):
     """Processes user input and generates a bar chart"""
     global messageData
     global messageInfo
+    global complete
     if request.method == "POST":
         data_inputData = request.POST.get('message', '').strip()
         # file_input=request.FILES['file']
         from .utils import  detect_language
 
+
         data_input = re.sub(r"\s+", " ", data_inputData).strip()
 
         print("daa",data_input)
+        actions = ["draw", "solve", "calculate", "compute", "if", "determine", "evaluate", "work out", "find"]
+        shapes = ["triangle", "square", "circle", "rectangle", "star"]
+
+        action_pattern = r"|".join([re.escape(a) for a in actions])
+        shape_pattern = r"|".join([f"{s}s?" for s in shapes])
+        draw_shape_regex = rf"\b(?:{action_pattern})\b.*?\b({shape_pattern})\b"  # group the shape
+
+        match_draw_shapes = re.search(draw_shape_regex, data_input, re.IGNORECASE)
 
         easy_pattern = r"\b(write|generate|create|need).*?\bessay\b"
         translate_pattern = r"(?:please\s+)?(?:can you\s+)?translate\s+(.+?)\s+(?:to|in|into)\s+(\w+)"
-        draw_parttern = r"\b(draw|create|make)\s+(a\s+)?(triangle|square|circle|star|rectangle)\b"
-
+        draw_pattern = r"\b(?:please\s+)?(?:draw|create|make)\s+(?:a\s+|an\s+)?(triangle|triangles|square|squares|circle|circles|star|stars|rectangle|rectangles)\b"
 
         pattern = re.compile(r"""^Solve for x: \d+x \+ \d+ = \d+,x = -?\d+$|
                                   ^John has \d+ apples and buys \d+ more\. How many apples does he have\?,-?\d+$|
@@ -161,7 +170,7 @@ def submit_message(request):
         quadratic_pattern_two = r"^([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?\s*(?:[:;,]\s*|\s*and\s*)\s*([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?$"
         non_english_pattern = r"[^\x00-\x7F]"
 
-        match_drawShapes=re.search(draw_parttern,data_input, re.IGNORECASE)
+        match_drawShapes=re.search(draw_pattern,data_input, re.IGNORECASE)
         matches_none_English = re.findall(non_english_pattern, data_input)
         match_essay = re.search(easy_pattern, data_input, re.IGNORECASE)
         Bar_match = re.search(Bar_pattern, data_input, re.IGNORECASE)
@@ -186,6 +195,54 @@ def submit_message(request):
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         message = deepcopy(data_input)
+        doc = nlp(data_input)
+        has_subject, has_verb, has_object = (False, False, False)
+        missing_word_position = None
+        tokens = [token.text for token in doc]
+        for token in doc:
+            if token.dep_ in ("nsubj", "nsubjpass"):
+                has_subject = True
+            if token.pos_ in ("VERB", "AUX"):
+                has_verb = True
+            if token.dep_ in ("dobj", "attr", "ccomp", "xcomp"):
+                has_object = True
+
+        # Insert [MASK] where necessary
+        if not has_subject:
+            missing_word_position = 0
+            tokens.insert(0, "[MASK]")
+        elif not has_verb:
+            for i, token in enumerate(doc):
+                if token.pos_ == "NOUN" or token.dep_ == "nsubj":
+                    missing_word_position = i + 1
+                    tokens.insert(i + 1, "[MASK]")
+                    break
+        elif not has_object:
+            for i, token in enumerate(doc):
+                if token.pos_ == "VERB":
+                    missing_word_position = i + 1
+                    tokens.insert(i + 1, "[MASK]")
+                    break
+
+        if missing_word_position is None:
+            tokens.append("[MASK]")
+            missing_word_position = len(tokens) - 1
+
+        masked_sentence = " ".join(tokens)
+        masked_sentence = masked_sentence.replace("[MASK]", "", masked_sentence.count("[MASK]") - 1)
+
+        # Error if more than one [MASK] token
+        if masked_sentence.count("[MASK]") != 1:
+            messageData.append({"message": "⚠️ Error: More than one [MASK] token found."})
+            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+
+        # 🔹 Predict missing word
+
+        prediction = fill_mask(masked_sentence)
+        predicted_word = prediction[0]["token_str"].strip()
+        tokens[missing_word_position] = predicted_word
+        complete_sentence = " ".join(tokens).strip()
+
 
         messageData.append({"message": message, "id": 123})
         request.session['messageData'] = messageData
@@ -195,7 +252,7 @@ def submit_message(request):
 
 
         if matches_none_English:
-
+            messageData.append({"message":complete_sentence})
             from .utils import translate_text
             full_language_name = langcodes.Language.get(detect_language).language_name()
             translator =translate_text(data_input,target_language="en")
@@ -227,15 +284,17 @@ def submit_message(request):
 
 
         if match_essay:
+            messageData.append({"message": complete_sentence})
             from .utils import generate_essay
             essayData = generate_essay(data_input)
             messageData.append({"message": essayData})
-            request.session['messageData'] = messageData
+            # request.session['messageData'] = messageData
 
 
 
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
         # elif math_model:
+        #    messageData.append({"message": complete_sentence})
         #      from .mathModel import solve_math
         #      data_inputData=solve_math(data_input)
         #      print("data_input",data_input)
@@ -247,34 +306,35 @@ def submit_message(request):
         #      messageData.append({"solution":content})
 
 
-        elif match_drawShapes:
+        elif match_draw_shapes:
             messageData = request.session.get('messageData', [])
+            shapes = match_draw_shapes.group(1).lower().rstrip('s')
 
-            pattern_triangle = r"\b(draw|create|make)\s+(a\s+)?(triangle)\b"
-            pattern_square = r"\b(draw|create|make)\s+(a\s+)?(square)\b"
-            pattern_circle = r"\b(draw|create|make)\s+(a\s+)?(circle)\b"
-            pattern_star = r"\b(draw|create|make)\s+(a\s+)?(star)\b"
-            pattern_rectangle = r"\b(draw|create|make)\s+(a\s+)?(rectangle)\b"
 
-            match_draw_triangle = re.search(pattern_triangle, data_input, re.IGNORECASE)
-            match_draw_square = re.search(pattern_square, data_input, re.IGNORECASE)
-            match_draw_circle = re.search(pattern_circle, data_input, re.IGNORECASE)
-            match_draw_star = re.search(pattern_star, data_input, re.IGNORECASE)
-            match_draw_rectangle = re.search(pattern_rectangle, data_input, re.IGNORECASE)
 
-            if match_draw_triangle:
+
+
+            if  shapes=="triangle":
+                messageData.append({"message": complete_sentence})
                 from .drawShapes import draw_triangle
-                messageData = draw_triangle(messageData)
+                messageData = draw_triangle(messageData,data_input)
 
-            elif match_draw_square:
+            elif  shapes=="square" :
+                messageData.append({"message": complete_sentence})
                 from .drawShapes import draw_square
-                messageData = draw_square(messageData)
-                request.session['messageData'] = messageData
+                messageData = draw_square(messageData,data_input)
+                # request.session['messageData'] = messageData
                 return render(request, 'myFileReader/index.html', {'messageData': messageData})
-            elif match_draw_rectangle:
+            elif shapes=="rectangle" :
+                messageData.append({"message": complete_sentence})
                 from .drawShapes import draw_rectangle
-                messageData = draw_rectangle(messageData)
-                request.session['messageData'] = messageData
+                messageData = draw_rectangle(messageData ,data_input)
+                # request.session['messageData'] = messageData
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
+            elif shapes=="circle" :
+                from .drawShapes import draw_circle
+                messageData = draw_circle(messageData ,data_input)
+                # request.session['messageData'] = messageData
                 return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
@@ -287,6 +347,7 @@ def submit_message(request):
         elif match_translate_Data:
             messageData = request.session.get('messageData', [])
             from .utils import translate_text
+
             cleaned_sentence = re.sub(
                 r'\b(translate|can you|can|into|please|in)\b',
                 '',
@@ -303,8 +364,8 @@ def submit_message(request):
 
             detected_language = None
             phrase = cleaned_sentence_lower
-            last_word = messageData[-2]
-            print("last_word", last_word)
+
+            print("last_word", phrase)
 
             for code, name in LANGUAGES.items():
                 name_lower = name.lower()
@@ -370,8 +431,8 @@ def submit_message(request):
                     print({"data is file":content})
 
                     messageData.append(content)
-                    request.session['messageData'] = messageData
-                    return render(request, 'myFileApp/index.html', {'messageData': messageData})
+                    # request.session['messageData'] = messageData
+                    return render(request, 'myFileReader/index.html', {'messageData': messageData})
                 else:
 
                    print("Not enough entries in messageData.")
@@ -428,19 +489,14 @@ def submit_message(request):
             findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
             findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
 
-            doc = nlp(data_input)
-            has_subject, has_verb, has_object = (False, False, False)
-            missing_word_position = None
-            tokens = [token.text for token in doc]
-            mainHeader = ""
-            paragraph = ""
-            global complete
+
+
             # Check for subject, verb, and object
 
             # If messageInfo was set (i.e., prediction succeeded)
             if messageInfo:
                 messageData.append({"message": messageInfo})
-                request.session["messageData"] = messageData
+                # request.session["messageData"] = messageData
                 return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
             # If prediction did not occur (fallback to pattern matching)
@@ -455,7 +511,7 @@ def submit_message(request):
 
 
             # If a pattern match is found
-            if score > 80:
+            if score > 55:
                 for pattern, response in pairs:
                     if pattern == best_match:
 
@@ -498,19 +554,19 @@ def submit_message(request):
                                 weather = get_weather(city)
                                 print("weather", weather)
                                 messageData.append({"weather": weather})
-                                request.session['messageData'] = messageData
+                                # request.session['messageData'] = messageData
 
 
                         elif best_match == findOne or best_match == findTwo:
                             from .drawShapes import draw_triangle
-                            messageData = draw_triangle(messageData)
-                            request.session['messageData'] = messageData
+                            messageData = draw_triangle(messageData,data_input)
+                            # request.session['messageData'] = messageData
 
                         elif best_match == findRectangleTwo:
                              from .drawShapes import draw_rectangle
-                             messageData = draw_rectangle(messageData)
+                             messageData = draw_rectangle(messageData,data_input)
                              messageData.append(messageData)
-                             request.session['messageData'] = messageData
+                             # request.session['messageData'] = messageData
 
 
 
@@ -568,13 +624,10 @@ def submit_message(request):
 
             # 🔹 Predict missing word
             try:
-                prediction = fill_mask(masked_sentence)
-                predicted_word = prediction[0]["token_str"].strip()
-                tokens[missing_word_position] = predicted_word
-                complete_sentence = " ".join(tokens).strip()
+                from .utils import google_search
 
                 complete = deepcopy(complete_sentence)
-                query = complete_sentence
+                query = complete
                 results = google_search(query)
 
                 if isinstance(results, list):  # Check if we got valid results
