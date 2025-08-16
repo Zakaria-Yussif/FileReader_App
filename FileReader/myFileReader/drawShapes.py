@@ -83,9 +83,12 @@ def draw_triangle(messageData, data_input):
     # Default dimensions
     base = 10
     height = 10
-
+    print("Input:", data_input)
     # Extract base and height from input
     match = re.search(r"base\s*(\d+)\D*height\s*(\d+)", data_input, re.IGNORECASE)
+    print("dataMacthh",match)
+
+
     if match:
         base = int(match.group(1))
         height = int(match.group(2))

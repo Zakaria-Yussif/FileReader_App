@@ -33,6 +33,9 @@ from googletrans import Translator
 
 from bs4 import BeautifulSoup
 from googletrans import LANGUAGES
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
 
 
 
@@ -137,7 +140,7 @@ def submit_message(request):
         data_input = re.sub(r"\s+", " ", data_inputData).strip()
 
         print("daa",data_input)
-        actions = ["draw", "solve", "calculate", "compute", "if", "determine", "evaluate", "work out", "find"]
+        actions = ["draw", "generate","show","solve", "calculate", "compute", "if", "determine", "evaluate", "work out", "find"]
         shapes = ["triangle", "square", "circle", "rectangle", "star"]
 
         action_pattern = r"|".join([re.escape(a) for a in actions])
@@ -148,29 +151,51 @@ def submit_message(request):
 
         easy_pattern = r"\b(write|generate|create|need).*?\bessay\b"
         translate_pattern = r"(?:please\s+)?(?:can you\s+)?translate\s+(.+?)\s+(?:to|in|into)\s+(\w+)"
-        draw_pattern = r"\b(?:please\s+)?(?:draw|create|make)\s+(?:a\s+|an\s+)?(triangle|triangles|square|squares|circle|circles|star|stars|rectangle|rectangles)\b"
 
-        pattern = re.compile(r"""^Solve for x: \d+x \+ \d+ = \d+,x = -?\d+$|
+        pattern = r"""^Solve for x: \d+x \+ \d+ = \d+,x = -?\d+$|
                                   ^John has \d+ apples and buys \d+ more\. How many apples does he have\?,-?\d+$|
                                   ^Find the derivative of \d+x\^\d+,-?\d+x\^\d+$|
-                                  ^Evaluate f\(x\) = x\^2 - \d+x \+ \d+ at x = -?\d+,f\(-?\d+\) = -?\d+$""", re.VERBOSE)
+                                  ^Evaluate f\(x\) = x\^2 - \d+x \+ \d+ at x = -?\d+,f\(-?\d+\) = -?\d+$"""
 
 
           # Output: True
 
-        confirmation_pattern = r"\b(yes|yeah|yep|sure|ok|okay|affirmative|absolutely|certainly)\b"
-
+        confirmation_pattern = r"\b(yes|yeah|yep|sure|ok|okay|affirmative|absolutely|certainly|add\s+image\s+\d+)\b"
 
         Bar_pattern = r"^\s*\w+\s*:\s*\d+\s*(,\s*\w+\s*:\s*\d+\s*)*$"
         linear_pattern = r"^([-+]?\d*\.?\d+)?\s*\*?\s*x\s*([-+]?\d*\.?\d+)?\s*\*?\s*y?\s*([-+]?\d+(\.\d+)?)?\s*=\s*([-+]?\d*\.?\d+)$"
         # linear_pattern2 = linear_pattern = r"^y\s*=\s*([-+]?\d*\.?\d+)?\s*\*?\s*x\s*([-+]?\s*\d+(\.\d+)?)?$"
-        diseases_pattern = r'^(?!(?:hi|how\s+are\s+you))[^,]+,\s*((?:[A-Za-z_]+(?:\s+[A-Za-z_]+)*)(?:\s*,\s*(?:[A-Za-z_]+(?:\s+[A-Za-z_]+)*))*)'
+        diseases_pattern = re.compile(
+            r"""
+            ^                              # start of string
+            (?:.*?\b(?:have|got|experiencing|suffering\s+from)\b)  # any lead‑in
+            \s*
+            (?P<symptoms>                  # capture all following text as “symptoms”
+                (?:                        # non‑capturing group for repetition
+                    [^,;/\|\n\r]+?         # any chars except separators
+                )
+                (?:                        # then zero or more of…
+                    (?:[,;/\|\n\r]|       #   any one of: comma, semicolon, slash, pipe, newline
+                     \band\b|              #   or the word “and”
+                     \bor\b|               #   or the word “or”
+                     \band/or\b)           #   or “and/or”
+                    [^,;/\|\n\r]+?         #   followed by more symptom text
+                )*
+            )
+            \s*$                           # optional trailing space, end
+            """,
+            re.IGNORECASE | re.VERBOSE
+        )
+        summarise=r"\b(?:please\s*)?(?:can|could|would)?\s*(you\s*)?(please\s*)?(summarize|summarise)\b"
+        # solve_pattern = re.compile(r'^[0-9a-zA-Z\+\-\*/\^\=\.\s\(\)]+$')
 
         quadratic_pattern = r"^([-+]?\d*\.?\d+|\d+)x\^2\s*([-+]?\d*\.?\d+|\d*)x\s*([-+]?\d*\.?\d+|\d+)?$"
         quadratic_pattern_two = r"^([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?\s*(?:[:;,]\s*|\s*and\s*)\s*([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?$"
         non_english_pattern = r"[^\x00-\x7F]"
+        draw_images_patternData = r"(?:please\s*)?(?:can|could|would)?\s*(?:you\s*)?(?:please\s*)?(draw|show|generate|create)\s+(?:an?\s*)?(?:image|picture|photo|drawing)?\s*(?:of|about)?\s*(?P<description>.+)"
 
-        match_drawShapes=re.search(draw_pattern,data_input, re.IGNORECASE)
+        match_summarise=re.search(summarise, data_input, re.IGNORECASE)
+        # match_drawShapes=re.search(draw_pattern,data_input, re.IGNORECASE)
         matches_none_English = re.findall(non_english_pattern, data_input)
         match_essay = re.search(easy_pattern, data_input, re.IGNORECASE)
         Bar_match = re.search(Bar_pattern, data_input, re.IGNORECASE)
@@ -178,8 +203,9 @@ def submit_message(request):
         match_linear = re.search(linear_pattern, data_input, re.IGNORECASE)
         match_quadratic = re.search(quadratic_pattern, data_input, re.IGNORECASE)
         match_quadratic_two = re.search(quadratic_pattern_two, data_input, re.IGNORECASE)
-
+        match_draw_imageData=re.search(draw_images_patternData, data_input.strip(), re.IGNORECASE)
         match_disease=re.findall(diseases_pattern,data_input)
+        match_solve_partern=re.search(pattern, data_input, re.IGNORECASE)
 
         match_translate= re.search(confirmation_pattern, data_input, re.IGNORECASE)
 
@@ -191,8 +217,8 @@ def submit_message(request):
         data_input = re.sub(r"\s+", " ", data_input).strip()
 
         if not data_input:
-            messageData.append({"message": "⚠️ Please enter a valid sentence!"})
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+              messageData.append({"message": "⚠️ Please enter a valid sentence!"})
+              return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         message = deepcopy(data_input)
         doc = nlp(data_input)
@@ -270,17 +296,22 @@ def submit_message(request):
             messageData.append({"translated": trans_message })
             request.session['messageData'] = messageData
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
+        if confirmation_pattern:
+            messageData=request.session['messageData']
+            last_Data= messageData[-2] if len(messageData) >= 2 else "none"
+            print("last_Data", last_Data)
 
-        # if pattern:
-        #     from .mathModel import predict
-        #     data_inputData=predict(question=data_input)
-        #     print("data_input",data_input)
-        #     content={
-        #         "equation": data_input,
-        #         "step3": data_inputData,
-        #         "answer": data_inputData,
-        #     }
-        #     messageData.append({"solution":content})
+
+        if match_solve_partern:
+            from .mathModel import predict
+            data_inputData=predict(question=data_input)
+            print("data_input",data_input)
+            content={
+                  "equation": data_input,
+                  "step3": data_inputData,
+                  "answer": data_inputData,
+                }
+            messageData.append({"solution":content})
 
 
         if match_essay:
@@ -304,6 +335,35 @@ def submit_message(request):
         #          "answer": data_inputData,
         #      }
         #      messageData.append({"solution":content})
+        elif match_draw_imageData:
+            from .draw_images import google_search_image
+            description=match_draw_imageData.group("description").strip()
+
+            print("dataDected",description)
+            data_input=description
+
+
+            query=description
+            results= google_search_image(query)
+            # print("dataDected", data_input)
+            print("results", results)
+            if isinstance(results, list):
+                for index, result in enumerate(results):
+                    link = result.get("link") if isinstance(result, dict) else "result"
+                    if not link:
+                        link = "None"
+                    label = f"image{index + 1}:link"
+                    print(label, link)
+                    messageData.append({
+                        "image_url": link,
+                        "label": label
+                    })
+
+                # Append the message only once after processing all items
+                message = "Which of the following images  would you like me to draw for you?"
+                messageData.append({"last_Data": message})
+
+
 
 
         elif match_draw_shapes:
@@ -479,7 +539,10 @@ def submit_message(request):
             messageData = request.session.get('messageData', [])
             messageData=quadratic_two(data_input,match_quadratic_two,messageData, request.session['messageData'])
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
-
+        elif match_summarise:
+            from .utils import summarise_message
+            messageData = request.session.get('messageData', [])
+            messageData=summarise_message(data_input,messageData)
         else:
             from .utils import google_search
             messageData = request.session.get('messageData', [])
@@ -511,7 +574,7 @@ def submit_message(request):
 
 
             # If a pattern match is found
-            if score > 55:
+            if score > 85:
                 for pattern, response in pairs:
                     if pattern == best_match:
 
@@ -574,113 +637,59 @@ def submit_message(request):
 
                         return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-
-
-
-
-
-
-
-
-
-
-            # Default response if no match or prediction was made
-            for token in doc:
-                if token.dep_ in ("nsubj", "nsubjpass"):
-                    has_subject = True
-                if token.pos_ in ("VERB", "AUX"):
-                    has_verb = True
-                if token.dep_ in ("dobj", "attr", "ccomp", "xcomp"):
-                    has_object = True
-
-            # Insert [MASK] where necessary
-            if not has_subject:
-                missing_word_position = 0
-                tokens.insert(0, "[MASK]")
-            elif not has_verb:
-                for i, token in enumerate(doc):
-                    if token.pos_ == "NOUN" or token.dep_ == "nsubj":
-                        missing_word_position = i + 1
-                        tokens.insert(i + 1, "[MASK]")
-                        break
-            elif not has_object:
-                for i, token in enumerate(doc):
-                    if token.pos_ == "VERB":
-                        missing_word_position = i + 1
-                        tokens.insert(i + 1, "[MASK]")
-                        break
-
-            if missing_word_position is None:
-                tokens.append("[MASK]")
-                missing_word_position = len(tokens) - 1
-
-            masked_sentence = " ".join(tokens)
-            masked_sentence = masked_sentence.replace("[MASK]", "", masked_sentence.count("[MASK]") - 1)
-
-            # Error if more than one [MASK] token
-            if masked_sentence.count("[MASK]") != 1:
-                messageData.append({"message": "⚠️ Error: More than one [MASK] token found."})
-                return render(request, 'myFileApp/index.html', {'messageData': messageData})
-
             # 🔹 Predict missing word
-            try:
-                from .utils import google_search
 
-                complete = deepcopy(complete_sentence)
-                query = complete
-                results = google_search(query)
+            from .utils import google_search
+            query = data_input
+            results = google_search(query)
+            messageData = request.session.get('messageData', [])
 
-                if isinstance(results, list):  # Check if we got valid results
-                    for idx, result in enumerate(results):
-                        title = result.get('title', 'No Title')
-                        snippet = result.get('snippet', 'No snippet available')
-                        link = result.get('link', 'No link available')
 
-                        # Try to get logo safely
-                        logo = result.get("pagemap", {}).get("cse_image", [{}])[0].get("src", "No logo available")
+            if isinstance(results, list):
+                for idx, result in enumerate(results):
+                    title = result.get('title', 'No Title')
+                    snippet = result.get('snippet', 'No snippet available')
+                    link = result.get('link', 'No link available')
+                    logo = result.get("pagemap", {}).get("cse_image", [{}])[0].get("src", "No logo available")
 
-                        message = (f"{idx + 1}. {title}\n📌"
-                                   f"{snippet}\n🔗"
-                                   f"{link}\n🖼️"
-                                   f"Logo: {logo}\n")
-                        # print(message)
+                    message = (f"{idx + 1}. {title}\n📌 {snippet}\n🔗 {link}\n🖼️ Logo: {logo}\n")
+                    print(message)
 
+                    try:
                         headers = {
                             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
                         }
-                        response = requests.get(link, headers=headers)
+                        response = requests.get(link, headers=headers, timeout=5)
 
                         if response.status_code == 200:
                             soup = BeautifulSoup(response.text, "html.parser")
                             headlines = [h1.get_text(strip=True) for h1 in soup.find_all("h1")][:3]
                             paragraphs = [p.get_text(strip=True) for p in soup.find_all("p")][:5]
 
-                            print("\n   📌 Headlines:")
-                            for i, headline in enumerate(headlines, start=1):
-                                mainHeader = f"   {i}. {headline}"
-
-                            for i, paragraph in enumerate(paragraphs, start=1):
-                                paragraph = f"{i}. {paragraph}"
+                            mainHeader = headlines[0] if headlines else "No headline found"
+                            paragraph = [f"{i}. {p}" for i, p in enumerate(paragraphs, start=1)] if paragraphs else [
+                                "No content found"]
 
                             content = {
                                 "mainHeader": mainHeader,
-                                "search": complete,
+                                "search": data_input,
                                 "paragraph": paragraph,
                                 "title": title,
                                 "snippet": snippet,
                                 "link": link,
                                 "logo": logo,
                             }
-
-                            # Append result to messageData
+                            print("content",content)
                             messageData.append({"website": content})
-
-                            # Store in session AFTER processing all results
                             request.session["messageData"] = messageData
 
-            except Exception as e:
-                messageData.append({"message": f"⚠️ Error during prediction: {str(e)}"})
-                return render(request, 'myFileReader/index.html', {'messageData': messageData})
+                    except Exception as e:
+                        print(f"Error fetching content from {link}: {e}")
+
+            # Store all results in session after processing
+
+
+
 
 
 
@@ -690,6 +699,9 @@ def submit_message(request):
 
 
 def clear_message_data(request):
+    storageData=[]
+    storageData.append(messageData)
+    print("storageData",storageData)
     # Clear only the 'messageData' key from the session
     request.session.pop('messageData', None)
     return JsonResponse({"status": "cleared"})

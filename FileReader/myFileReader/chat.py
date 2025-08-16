@@ -11,6 +11,11 @@ pairs = [
     (r"good evening", ["Good evening! How was your day?", "Good evening! How can I assist you today?"]),
 
     # Responses to how the user is feeling
+(r"thank you|thanks|thanks a lot|thanks so much|many thanks|thanks a million|i appreciate it|thanks for your help|much obliged|thanks heaps",
+     ["You're welcome!", "No problem.", "Anytime!", "Happy to help.", "My pleasure.", "Don't mention it.", "Glad I could help.", "That's what I'm here for.", "Of course.", "No worries."]),
+
+
+
     (r"how are you\??",
      ["I'm doing great, thank you!", "I'm good, thanks for asking!", "I'm doing well! How about you?"]),
     (r"i'm fine", ["Glad to hear it!", "That's great!", "Awesome, glad you're doing well!"]),

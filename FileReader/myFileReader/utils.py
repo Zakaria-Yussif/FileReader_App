@@ -1,3 +1,4 @@
+from math import trunc
 
 import requests
 
@@ -28,6 +29,7 @@ from googletrans import Translator
 from django.conf import settings
 import pdfplumber
 import os
+from pathlib import Path
 from .forms import RegisterForm
 import numpy as np
 
@@ -37,16 +39,70 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
 from sympy import symbols, Eq, solve, simplify, pretty, sympify
+
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lsa import LsaSummarizer
 # from .model import PlotImage
 
 
-GOOGLE_API_KEY = settings.GOOGLE_API_KEY
-CSE_ID = settings.CSE_ID
+# GOOGLE_API_KEY = settings.GOOGLE_API_KEY
+# CSE_ID = settings.CSE_ID
+GOOGLE_API_KEY="AIzaSyCsRN4Q09MowXjxEGsyADuJcFFTSYQDq-8"
+CSE_ID="658e29a77c0f64601"
 
 filename = r"C:\Users\zakar\PycharmFileExtractor\FileApp\runserver.XLS"
+#
+# fill_mask = pipeline("fill-mask", model="bert-base-uncased")
+# nlp = spacy.load("en_core_web_sm")
 
-fill_mask = pipeline("fill-mask", model="bert-base-uncased")
-nlp = spacy.load("en_core_web_sm")
+
+BASE_DIR   = Path(__file__).resolve().parent
+MODELS_DIR = BASE_DIR / "models"
+SPACY_DIR  = BASE_DIR / "spacy"
+
+BERT_DIR = MODELS_DIR / "bert-base-uncased"
+BART_DIR = MODELS_DIR / "facebook-bart-large-cnn"
+GPT2_DIR = MODELS_DIR / "distilgpt2"
+SPACY_EN = SPACY_DIR / "en_core_web_sm"
+
+# If the server has no internet, keep these ON
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+def load_spacy():
+    try:
+        return spacy.load("en_core_web_sm")
+    except Exception:
+        pass
+    try:
+        if SPACY_EN.exists():
+            return spacy.load(str(SPACY_EN))
+    except Exception:
+        pass
+    nlp = spacy.blank("en")
+    if "sentencizer" not in nlp.pipe_names:
+        nlp.add_pipe("sentencizer")
+    print("[spaCy] Using blank('en') fallback (no NER).")
+    return nlp
+
+def load_pipeline(task, model_dir, hub_id):
+    try:
+        if Path(model_dir).exists():
+            return pipeline(task, model=str(model_dir), tokenizer=str(model_dir), local_files_only=True)
+        # If you DO have internet/cached models, flipping offline env vars off will allow this:
+        return pipeline(task, model=hub_id)
+    except Exception as e:
+        print(f"[pipeline:{task}] unavailable: {e}")
+        return None
+
+# filename path (optional)
+filename = Path(r"C:\Users\zakar\PycharmFileExtractor\FileApp\runserver.XLS")
+
+# Load models safely
+fill_mask = load_pipeline("fill-mask", BERT_DIR, "bert-base-uncased")
+summarizer_pipeline = load_pipeline("summarization", BART_DIR, "facebook/bart-large-cnn")
+nlp = load_spacy()
 translator = Translator()
 
 
@@ -87,8 +143,8 @@ def generate_barChart(data_input, messageData, request):
         image_url = settings.MEDIA_URL + 'user_bar_chart.png'
         with open('square_plot.png', 'rb') as f:
             django_file = File(f)
-            img = PlotImage(title='Square Plot')
-            img.image.save('square_plot.png', django_file, save=True)
+            # img = PlotImage(title='Square Plot')
+            # img.image.save('square_plot.png', django_file, save=True)
 
         # Append message and image to messageData
         messageData.append({"image_url": image_url, "message": data_input})
@@ -143,8 +199,8 @@ def linear_equation(input_data, match_linear, messageData, request):
         # Save image to database
         with open(image_path, 'rb') as f:
             django_file = File(f)
-            plot_image = PlotImage(title=f'Linear Graph: y = {m}x + {b}')
-            plot_image.image.save(image_filename, django_file, save=True)
+            # plot_image = PlotImage(title=f'Linear Graph: y = {m}x + {b}')
+            # plot_image.image.save(image_filename, django_file, save=True)
 
         image_url = settings.MEDIA_URL + image_filename
 
@@ -222,7 +278,7 @@ def quadratic(data_input,match_quadratic, messageData, request):
 
     # Return the image URL
     image_url = settings.MEDIA_URL + 'quadratic_plot.png'
-    PlotImage.objects.create(title="quadratic_plot.png:{a}x² + {b}x + {c}", image=image_url)
+    # PlotImage.objects.create(title="quadratic_plot.png:{a}x² + {b}x + {c}", image=image_url)
     content = {}
 
     if a != 0:
@@ -311,7 +367,7 @@ def quadratic_two(data_input,match_quadratic_two, messageData, request):
 
     # Return the image URL
     image_url = settings.MEDIA_URL + 'two_quadratic_plot.png'
-    PlotImage.objects.create(tittle="Two Quadratic Equations",image_url=image_url)
+    # PlotImage.objects.create(tittle="Two Quadratic Equations",image_url=image_url)
 
     if a != 0 or a1 != 0:
         try:
@@ -390,7 +446,7 @@ def quadratic_two(data_input,match_quadratic_two, messageData, request):
 
 def generate_essay(prompt):
     generator = pipeline("text-generation", model="distilgpt2")
-    essay = generator(prompt, max_length=800, do_sample=True, temperature=0.7)
+    essay = generator(prompt, do_sample=True, temperature=0.7,truncation=True)
     return essay[0]["generated_text"]
 
 
@@ -577,7 +633,7 @@ def upload_files(uploaded_file, messageData,request):
             }
 
             text = content["mainHeader"] + " " + " ".join(content["title"]) + " " + " ".join(content["paragraph"])
-
+            summarise_data=summarise_message(text)
             detected_language = translator.detect(text).lang
             full_language_name = langcodes.Language.get(detected_language).language_name()
             print(f"Detected language: {full_language_name}")
@@ -600,7 +656,8 @@ def upload_files(uploaded_file, messageData,request):
             if detected_language != "en":
                 messageTrans = f"This document is categorized as {predicted_category}. It contains {len(name_entities)} entities such as {entities_message}."
                 content["message"] = messageTrans
-                messageData.append({"fileData": content})
+                messageData.append({"fileData": content,"message":summarise_data})
+
                 request.session['messageData'] = messageData
 
                 return messageData
@@ -631,8 +688,33 @@ def detect_language(data_input):
     return language
 
 
+#
 
-def google_search(query, num_results=5):
+# Load the model once (globally or inside a setup)
+summarizer_pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
+
+def summarise_message(data_input, messageData, min_len=30, max_len=100):
+    if not data_input or len(data_input.strip()) < 20:
+        return "No sufficient content to summarize."
+
+    try:
+        # Dynamically adjust max and min lengths based on input size
+        input_len = len(data_input.split())
+        max_len = min(max_len, max(20, int(input_len * 0.6)))
+        min_len = min(min_len, max(10, int(input_len * 0.4)))
+
+        summary = summarizer_pipeline(data_input, max_length=max_len, min_length=min_len, do_sample=False)
+        summarized_text = summary[0]['summary_text']
+
+        print("summarization:", summarized_text)
+        messageData.append({"message": summarized_text})
+
+        return summarized_text, messageData
+    except Exception as e:
+        return f"Error during summarization: {e}"
+
+
+def google_search(query, num_results=3):
     """Perform a Google search using the API."""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {

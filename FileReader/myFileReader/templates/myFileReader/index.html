@@ -2,855 +2,447 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FileReader</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FileReader</title>
 
-    <!-- Static CSS -->
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{% static 'css/styleg.css' %}" />
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
- <link rel="stylesheet" type="text/css" href="{% static 'css/styleg.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <!-- MathJax -->
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
-    <!-- Bootstrap -->
+  <style>
+    /* Headings */
+    h1 { color: #007bff; }
 
-
-    <!-- JavaScript Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-<style>
-
-/* Headings */
-h1 {
-    color: #007bff;
-}
-
-/* Login Form */
-.login_forms {
-    margin: 120px auto;
-    justify-content: center;
-    text-align: center;
-    width: 30%;
-    background-color: #fff;
-    height: auto;
-    position: relative;
-    padding: 10px;
-    border-radius: 10px;
-    border: 2px solid rgba(0, 123, 255, 0.37);
-}
-
-/* Register Form */
-.register_forms {
-    margin: 120px auto;
-    justify-content: center;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    width: 30%;
-    background-color: #fff;
-    height: auto;
-    position: relative;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 2px 5px 6px 6px rgba(35, 35, 41, 0.1);
-}
-
-/* Form Styling */
-.forms {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.form-field {
-    margin-bottom: 10px;
-    text-align: center;
-    color: gray;
-    border: 2px solid blue; /* Fixed incorrect border syntax */
-    padding: 5px;
-}
-
-.form-field label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: gray;
-}
-
-.form-field input {
-    width: 50% !important;
-    padding: 8px;
-    justify-content: center;
-    margin-top: 5px;
-    border: 1px solid #ccc !important;
-    border-radius: 4px;
-    outline-color: rgba(0, 179, 164, 0.65);
-}
-
-/* Buttons */
-button {
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-
-
-/* Login Header */
-#login_header {
-    color: #007bff;
-    position: absolute;
-    margin-top: -29px;
-    background-color: #f4f4f4;
-    width: 100px;
-    border-radius: 5px;
-    z-index: 1;
-}
-
-/* Login Button */
-#login_button {
-    margin-top: 10px;
-    background-color: green;
-    color: #fff;
-    border: none;
-    width: auto;
-    font-size: 15px;
-    padding: 3px 3px 5px 5px;
-    height: auto;
-    border-radius: 2px;
-}
-
-
-#upload_data{
-    display: none;
-}
-/* Message Styling */
-.message-right {
-    display: flex;
-    align-self: flex-end;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    background-color: #f0f0f0;
-    border-radius: 10px 10px 0px 10px;
-    padding: 5px;
-    margin-left: auto;
-    margin-bottom: 10px;
-    height: auto;
-    text-align: left;
-}
-
-/* Fix Hidden Messages */
-.message-left {
-    opacity: 1 !important;
-    transition: opacity 1s ease-in-out;
-    text-align: left;
-}
-
-
-
-.body{
-    display: grid;
-    grid-template-columns: 20% 80%;
-    height: 90vh;
-    width: 100%;
-}
-
-#sidebarCollapse {
-    height: 89vh;
-              box-shadow: 0px 3px 0px 0px rgba(13, 5, 1, 0.1);
-              border-bottom: 1px solid grey;
-              display: flex;
-    flex-direction: column;
-}
-
-/* Typing Animation */
-@keyframes typing {
-    from {
-        width: 0;
+    /* Auth Cards */
+    .login_forms,
+    .register_forms {
+      margin: 120px auto;
+      text-align: center;
+      width: 30%;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid rgba(0, 123, 255, 0.37);
     }
-    to {
-        width: 100%;
+    .register_forms { box-shadow: 2px 5px 6px 6px rgba(35, 35, 41, 0.1); }
+
+    /* Form Styling */
+    .forms { display: flex; flex-direction: column; justify-content: center; }
+    .form-field { margin-bottom: 10px; text-align: center; color: gray; border: 2px solid blue; padding: 5px; }
+    .form-field label { display: block; font-weight: bold; margin-bottom: 5px; color: gray; }
+    .form-field input { width: 50% !important; padding: 8px; margin-top: 5px; border: 1px solid #ccc !important; border-radius: 4px; outline-color: rgba(0, 179, 164, 0.65); }
+
+    /* Buttons */
+    button { padding: 10px 15px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    button:hover { background-color: #0056b3; }
+
+    /* Login Header */
+    #login_header { color: #007bff; position: absolute; margin-top: -29px; background-color: #f4f4f4; width: 100px; border-radius: 5px; z-index: 1; }
+
+    /* Login Button */
+    #login_button { margin-top: 10px; background-color: green; color: #fff; border: none; font-size: 15px; padding: 3px 5px; border-radius: 2px; }
+
+    #upload_data { display: none; }
+
+    /* Messages */
+    .message-right {
+      display: flex; align-self: flex-end; overflow-wrap: break-word; word-wrap: break-word; background-color: #f0f0f0; border-radius: 10px 10px 0 10px; padding: 5px; margin-left: auto; margin-bottom: 10px; text-align: left;
     }
-}
+    .message-left { opacity: 1 !important; transition: opacity 1s ease-in-out; text-align: left; }
 
-@keyframes blinkCaret {
-    50% {
-        border-color: transparent;
+    .body { display: grid; grid-template-columns: 20% 80%; height: 90vh; width: 100%; }
+
+    #sidebarCollapse { height: 89vh; box-shadow: 0 3px 0 0 rgba(13, 5, 1, 0.1); border-bottom: 1px solid grey; display: flex; flex-direction: column; }
+
+    /* Typing Animation */
+    @keyframes typing { from { width: 0; } to { width: 100%; } }
+    @keyframes blinkCaret { 50% { border-color: transparent; } }
+
+    /* Ensure Visibility */
+    .message.visible { opacity: 1; }
+
+    @media (max-width: 1008px) {
+      #form { min-width: 90vw; }
+      .body { grid-template-columns: 0% 100%; position: fixed; max-height: 89vh; }
+      .form-control { min-width: 100%; }
+      #sidebarCollapse { height: 20px; width: 0; visibility: hidden; overflow: hidden; }
+      .main-container { width: 100%; }
+      #button-group { margin-left: 100px; }
     }
-}
-
-Ensure Visibility
-.message.visible {
-    opacity: 1;
-}
-
-@media(max-width: 1008px){
-
-    #form{
-        min-width: 90vw;
-        /*justify-content: center;*/
-    }
-    .body{
-    display: grid;
-    grid-template-columns: 0% 100%;
-        position: fixed;
-
-    max-height: 89vh;
-
-
-}
-    .form-control{
-        min-width: 100%;
-
-
-
-
-    }
-    #sidebarCollapse{
-   height: 20px;
-        width: 0;
-        visibility: hidden;
-        overflow: hidden;
-
-
-
-    }
-    .main-container{
-        /*left: 1000px;*/
-        width:100%;
-
-    }
-#button-group{
-    margin-left: 100px;
-}
-
-}
-/*@media (max-width: 1008px) {*/
-/*    #sidebarCollapse {*/
-/*      display: none !important;*/
-/*        width: 100%;*/
-/*    }*/
-/*    .body{*/
-/*        display: grid;*/
-/*        grid-template-columns:99% 0%;*/
-/*        height: 90vh;*/
-/*        width: 100%;*/
-/*    }*/
-/*    .main-container{*/
-/*        width: 100% !important;*/
-/*        height: 80vh;*/
-/*        overflow-y: scroll;*/
-/*        padding-right: 10px;*/
-/*        maegin-left: 1000px;*/
-/*    }*/
-
-/*    #form{*/
-/*        width: 100% !important;*/
-/*        position: relative;*/
-
-
-/*    }*/
-/*    #message{*/
-/*        width: 500px !important;*/
-/*        justify-content: center;*/
-/*        position: absolute;*/
-
-/*    }*/
-/*    #upload_data{*/
-/*        display: block;*/
-/*        width: 100px !important;*/
-/*        margin-right: 100% !important;*/
-/*    }*/
-
-/*    #button{*/
-/*        margin-left: 50% !important;*/
-
-/*    }*/
-
-/*  }*/
-
-</style>
-
-
-
-
+  </style>
 </head>
 <body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-body-white">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Navbar</a>
 
-<!-- Header -->
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-body-white">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Navbar</a>
+      <!-- One toggler controls both nav and sidebar -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".dual-collapse" aria-controls="navbarCollapse sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <!-- Toggler button to collapse both nav and sidebar -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".dual-collapse" aria-controls="navbarCollapse sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- Collapsible Nav Links -->
-    <div class="collapse navbar-collapse dual-collapse" id="navbarCollapse">
-      <ul class="navbar-nav">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Data Analysis</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Data Visualisation</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">File Reader</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
-        </li>
-        <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
-      </ul>
+      <div class="collapse navbar-collapse dual-collapse" id="navbarCollapse">
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Data Analysis</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Data Visualisation</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">File Reader</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
+        </ul>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
-<!-- Sidebar/Body Collapsible Section -->
-<div class="body" >
-  <!-- Sidebar -->
-  <div id="sidebarCollapse" class="collapse bg-body-secondary text-center dual-collapse"
-       >
-    <div style="height: 30vh;">
-      <h6 style="color: grey;">Data Analysis</h6>
+  <div class="body">
+    <!-- Sidebar -->
+    <div id="sidebarCollapse" class="collapse bg-body-secondary text-center dual-collapse">
+      <div style="height: 30vh;"><h6 class="text-muted">Data Analysis</h6></div>
+      <div style="height: 30vh;"><h6 class="text-muted">Data Visualisation</h6></div>
+      <div style="height: 30vh;"><h6 class="text-muted">FileReader</h6></div>
+      <div><span class="text-muted small text-start"><span class="text-dark">©</span> 2025 Zack. All rights reserved</span></div>
     </div>
-    <div style="height: 30vh;">
-      <h6 style="color: grey;">Data Visualisation</h6>
-    </div>
-    <div style="height: 30vh;">
-      <h6 style="color: grey;">FileReader</h6>
-    </div>
-    <div>
-      <span style="color: grey; font-size: small; text-align: start;">
-        <span style="color: black">©</span> 2025 Zack. All rights reserved
-      </span>
-    </div>
-  </div>
 
-    <div>
+    <!-- Main -->
+    <div class="w-100">
+      <div class="main-container" style="height: 74vh; width: 99%; margin: 10px; overflow-y: auto; padding-right: 10px; cursor: default;">
 
-<div class="main-container" style="height: 74vh; width:99%; margin: 10px; overflow-y: scroll; padding-right: 10px;">
-    {% for item in messageData %}
-        <div class="{% if item.id %}message-right{% else %}message-left{% endif %}"
-            style="{% if item.id %}
-                min-width:auto;
-                display: flex;
-                max-width: 40%;
-                align-self: flex-end;
-                overflow-wrap: break-word;
-                word-wrap: break-word;
-                background-color: rgba(245,245,245,0.96);
-                border-radius: 10px 10px 0px 10px;
-                padding: 5px;
-                margin-left: auto;
-                margin-bottom: 10px;
-                height: auto;
-                text-align: left;
-                font-size: 17px;
-                direction: rtl;
-            {% else %}
-                max-width:80%;
-                box-shadow: 10px 5px 10px 10px rgba(255, 255,255,0.1);
-                font-size: 17px;
-                color:#333333;
-                font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
-                min-width:20px;
-                justify-items: start;
-                background-color: rgba(245,245,245,0.34);
-                height: auto;
-                overflow-wrap: break-word;
-            {% endif %}">
+        {% for item in messageData %}
+          <div class="{% if item.id %}message-right{% else %}message-left{% endif %}"
+               id="msg-{{ forloop.counter }}"
+               style="{% if item.id %}
+                 max-width: 40%; background-color: rgba(245,245,245,0.96); border-radius: 10px 10px 0 10px; padding: 5px; font-size: 17px; direction: rtl;
+               {% else %}
+                 max-width: 80%; box-shadow: 10px 5px 10px 10px rgba(255,255,255,0.1); font-size: 17px; color: #333; font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif; background-color: rgba(245,245,245,0.34);
+               {% endif %}">
 
-            <!-- Display the message text -->
-            <p class="message_display">{{ item.message   }}</p>
+            <p class="message_display">{{ item.message }}</p>
 
+            <!-- Per-card search spinner + results -->
+            <span id="spinner-{{ forloop.counter }}" class="d-none">Searching ...</span>
 
+            {% if item.website %}
+              <div id="results-{{ forloop.counter }}" class="search_results">
+                <div class="search-result mb-3">
+                  {% comment %} Header (prefer mainHeader, else nHeader) {% endcomment %}
+<p>{% firstof item.website.mainHeader item.website.nHeader '' %}</p>
 
+                  {% if item.website.mainContent %}<p>{{ item.website.mainContent }}</p>{% endif %}
+                  {% if item.website.complete %}<h2>{{ item.website.complete }}</h2>{% endif %}
 
-        <span id="spine_web" style="display: none">Searching ...</span>
+                  {% if item.website.paragraph %}
+                    <p><strong>📖 Content:</strong> {{ item.website.paragraph|join:" " }}</p>
+                  {% endif %}
 
-{% if item.website %}
-<div class="search_results" style="display: none;">
-    <div class="search-result">
-        <div style="margin-bottom: 10px;">
-            <p>{{ item.website.mainHeaders }}</p>
-            <p>{{ item.website.mainContent }}</p>
-            <p><strong>📖 Content:</strong> {{ item.website.paragraph }}</p>
-            <p>dkdkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk</p>
-        </div>
+                  <h6>
+                    <a href="{{ item.website.link }}" target="_blank" rel="noopener">{{ item.website.title }}</a>
+                  </h6>
+                  {% if item.website.snippet %}
+                    <p class="text-muted">{{ item.website.snippet }}</p>
+                  {% endif %}
 
-        <h2>{{ item.website.complete }}</h2>
-        <h6>
-            <a href="{{ item.website.link }}" target="_blank">{{ item.website.title }}</a>
-        </h6>
-        <p style="color: grey;">{{ item.website.snippet }}</p>
+                  {% if item.website.logo and item.website.logo != "No logo available" %}
+                    <img id="image-{{ forloop.counter }}" src="{{ item.website.logo }}" alt="Website Logo" style="max-width: 100px; height: auto; border-radius: 5px;" />
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
 
-        {% if item.website.logo != "No logo available" %}
-        <img onclick="zoomIn()" id="image" src="{{ item.website.logo }}" alt="Website Logo"
-             style="max-width: 100px; height: auto; border-radius: 5px;">
-        {% endif %}
-    </div>
-</div>
+            {% if item.translated %}
+              <div class="d-flex flex-column p-3 rounded shadow-sm mt-3">
+                <ul class="list-unstyled mb-0">
+                  <li><strong>{{ item.translated.message }}</strong></li>
+                  <li>{{ item.translated.user_input }}</li>
+                  <hr />
+                  <li><strong>{{ item.translated.translator }}</strong></li>
+                  <li>{{ item.translated.translator_text }}</li>
+                </ul>
+              </div>
+            {% endif %}
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const webSpinner = document.getElementById("spine_web");
-        const webResults = document.querySelector(".search_results");
-
-        webSpinner.style.display = "block";
-        webResults.style.display = "none";
-
-        setTimeout(() => {
-            webSpinner.style.display = "none";
-            webResults.style.display = "block";
-        }, 2000);
-    });
-</script>
-{% endif %}
-
-{% if item.translated %}
-<div class="d-flex flex-column p-3  rounded shadow-sm mt-3">
-    <ul class="list-unstyled mb-0">
-        <li><strong>{{ item.translated.message }}</strong></li>
-        <li>{{ item.translated.user_input }}</li>
-        <hr>
-        <li><strong>{{ item.translated.translator }}</strong></li>
-        <li>{{ item.translated.translator_text }}</li>
-    </ul>
-</div>
-{% endif %}
-
-
-
-
-
-
-
-
-
-        {% if item.weather %}
-            <div class=" rounded shadow-sm mt-3" style="padding: 5px">
-    <table class="bg-light  " style="width: 50%; justify-content: center;margin: 10px;padding: 5px">
-        <tr style="margin: 20px">
-            <th scope="col">Weather</th>
-            <th scope="col">Icon</th>
-            <th scope="col">Temperature</th>
-        </tr>
-        <tr style="margin: 20px" >
-            <td>{{ item.weather.weather }}</td>
-            <td>
-                <img src="{{ item.weather.weather_icon }}" alt="weather icon" style="width:50px;" />
-            </td>
-            <td>{{ item.weather.weather_temperature }}</td>
-        </tr>
-    </table>
-
-    <p>
-        You are currently located in <strong>{{ item.weather.city }}</strong> on
-        <span>{{ item.weather.day }}</span> at
-        <span>{{ item.weather.time }}</span>, and the sky is
-        <strong>{{ item.weather.weather }}</strong>.
-    </p>
-
-
-            </div>
-{% endif %}
-
-
-
-
-
+            {% if item.weather %}
+              <div class="rounded shadow-sm mt-3 p-2">
+                <table class="table table-sm table-bordered w-50 m-2 bg-light">
+                  <tr>
+                    <th scope="col">Weather</th>
+                    <th scope="col">Icon</th>
+                    <th scope="col">Temperature</th>
+                  </tr>
+                  <tr>
+                    <td>{{ item.weather.weather }}</td>
+                    <td><img src="{{ item.weather.weather_icon }}" alt="weather icon" style="width: 50px;" /></td>
+                    <td>{{ item.weather.weather_temperature }}</td>
+                  </tr>
+                </table>
+                <p>
+                  You are currently located in <strong>{{ item.weather.city }}</strong> on
+                  <span>{{ item.weather.day }}</span> at
+                  <span>{{ item.weather.time }}</span>, and the sky is
+                  <strong>{{ item.weather.weather }}</strong>.
+                </p>
+              </div>
+            {% endif %}
 
             {% if item.solution %}
-                <span id="thinking" style="display:none">Thinking...</span>
-    <div class="d-flex rounded shadow-sm mt-3" id="solution">
-
-        <ul class="list-unstyled" style="margin: 15px; height: auto;">
-            <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-
-                <strong>Equation:</strong>
-                <span style="margin:0px 15px; color: grey">{{ item.solution.equation }}</span>
-            </li>
-
-
-            <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                <strong>Step 1:</strong>
-                <span style="margin:0px 15px; color: grey">{{ item.solution.step1 }}</span>
-            </li>
-            <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                <strong>Step 2:</strong>
-                <span style="margin:0px 15px; color: grey">{{ item.solution.step2 }}</span>
-            </li>
-            <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                <strong>Step 3:</strong>
-                <span style="margin:0px 15px; color: grey" id="step3">\({{ item.solution.step3|safe }}\)</span>
-            </li>
-
-            <!-- Check if step4 and step5 exist -->
-            {% if item.solution.step4 and item.solution.step5 %}
-                <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                    <strong>Step 4:</strong>
-                    <span style="margin:0px 15px; color: grey">{{ item.solution.step4 }}</span>
-                </li>
-                <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                    <strong>Step 5:</strong>
-                    <span style="margin:0px 15px; color: grey">{{ item.solution.step5 }}</span>
-                </li>
+              <span id="thinking-{{ forloop.counter }}" class="d-none">Thinking...</span>
+              <div class="d-flex rounded shadow-sm mt-3" id="solution-{{ forloop.counter }}">
+                <ul class="list-unstyled m-3">
+                  <li class="list-group-item mb-3"><strong>Equation:</strong> <span class="ms-2 text-muted">{{ item.solution.equation }}</span></li>
+                  <li class="list-group-item mb-3"><strong>Step 1:</strong> <span class="ms-2 text-muted">{{ item.solution.step1 }}</span></li>
+                  <li class="list-group-item mb-3"><strong>Step 2:</strong> <span class="ms-2 text-muted">{{ item.solution.step2 }}</span></li>
+                  <li class="list-group-item mb-3"><strong>Step 3:</strong> <span class="ms-2 text-muted" id="step3">\({{ item.solution.step3|safe }}\)</span></li>
+                  {% if item.solution.step4 and item.solution.step5 %}
+                    <li class="list-group-item mb-3"><strong>Step 4:</strong> <span class="ms-2 text-muted">{{ item.solution.step4 }}</span></li>
+                    <li class="list-group-item mb-3"><strong>Step 5:</strong> <span class="ms-2 text-muted">{{ item.solution.step5 }}</span></li>
+                  {% endif %}
+                  <li class="list-group-item mb-3"><strong>Solution:</strong> <span class="ms-2 text-success badge bg-success">{{ item.solution.answer }}</span></li>
+                  <li><p>{{ item.solution.message }}</p></li>
+                  <li class="list-group-item"><img src="{{ item.solution.image_url }}" alt="Generated Image" style="max-width: 100%; height: 40vh; border-radius: 8px; margin-bottom: 10px;" /></li>
+                </ul>
+              </div>
             {% endif %}
 
-            <!-- Display the final solution -->
-            <li class="list-group-item" id="message_display" style="margin-bottom:15px;">
-                <strong>Solution:</strong>
-                <span style="margin:0px 15px; color: green" class="badge badge-success">{{ item.solution.answer }}</span>
-            </li>
-        <li><p>{{ item.solution.message }}</p></li>
-        <li class="list-group-item"><img  src="{{ item.solution.image_url }}" alt="Generated Image" style="max-width: 100%; height: 40vh; border-radius: 8px; margin-bottom: 10px;"></li>
-
-        </ul>
-       <hr></hr>
-
-
-    </div>
-
-{% endif %}
-
-            <!-- Display the image if available -->
-
-
-
-        {% if item.disease_message %}
-        <div class="d-flex rounded shadow-sm mt-3">
-        <ul class="list-unstyled" style=" margin: 15px; color:#000;">
-            <li class="list-group-item" style="color: gray; margin: 15px">Based on the symptoms provided:<strong>{{ item.disease_message.user_input }}.</strong> I believe you have <strong>{{ item.disease_message.predicted }}.</strong></li>
-            <li class="list-group-item" style="color: gray; margin: 15px"><strong> Description:</strong><br>
-                {{ item.disease_message.description }}</li>
-             <li class="list-group-item" style="color: gray; margin: 15px"><strong> Precautions:</strong><br>{{ item.disease_message.precaution }}</li>
-             <li class="list-group-item" style="color: gray; margin: 15px"><strong>Disclaimer:</strong> This information is generated by ZackBird AI. Please consult a healthcare professional for a proper diagnosis and treatment plan.</li>
-
-        </ul>
-
-        </div>
-<hr></hr>
-        {% endif %}
-
-
-        {% if item.fileData %}
-    <div class="d-flex">
-        <ul class="list-unstyled my-3">
-
-            {% if item.fileData.mainHeader %}
-
-
-               <li class="list-group-item-heading my-3">
-
-
-                   <strong style="color: grey">{{ item.fileData.mainHeader }}</strong>
-               </li>
+            {% if item.disease_message %}
+              <div class="d-flex rounded shadow-sm mt-3">
+                <ul class="list-unstyled m-3 text-dark">
+                  <li class="list-group-item text-muted m-2">Based on the symptoms provided: <strong>{{ item.disease_message.user_input }}</strong>. I believe you have <strong>{{ item.disease_message.predicted }}</strong>.</li>
+                  <li class="list-group-item text-muted m-2"><strong>Description:</strong><br />{{ item.disease_message.description }}</li>
+                  <li class="list-group-item text-muted m-2"><strong>Precautions:</strong><br />{{ item.disease_message.precaution }}</li>
+                  <li class="list-group-item text-muted m-2"><strong>Disclaimer:</strong> This information is generated by ZackBird AI. Please consult a healthcare professional for a proper diagnosis and treatment plan.</li>
+                </ul>
+              </div>
+              <hr />
             {% endif %}
 
-            {% if item.fileData.title %}
-                <li class="list-group-item my-3">{{ item.fileData.title }}</li>
-            {% endif %}
-
-            {% if item.fileData.paragraph %}
-    {% for line in item.fileData.paragraph %}
-        <div>{{ line }}</div>
-    {% endfor %}
-{% endif %}
-
-            {% if item.fileData.bullets %}
-                <li class="list-group-item my-3">
-                    <ul>
-                        {% for bullet in item.fileData.bullets %}
-                            <li>{{ bullet }}</li>
-                        {% endfor %}
-                    </ul>
-                </li>
-            {% endif %}
-            {% if item.fileData.links %}
-                <li class="list-group-item my-3">
-                    {% for link in item.fileData.links %}
-                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.text }}</a><br>
+            {% if item.fileData %}
+              <div class="d-flex">
+                <ul class="list-unstyled my-3">
+                  {% if item.fileData.mainHeader %}
+                    <li class="list-group-item-heading my-3"><strong class="text-muted">{{ item.fileData.mainHeader }}</strong></li>
+                  {% endif %}
+                  {% if item.fileData.title %}
+                    <li class="list-group-item my-3">{{ item.fileData.title }}</li>
+                  {% endif %}
+                  {% if item.fileData.paragraph %}
+                    {% for line in item.fileData.paragraph %}
+                      <div>{{ line }}</div>
                     {% endfor %}
-                </li>
-            {% endif %}
-
-            {% if item.fileData.table %}
-                <li class="list-group-item my-3">
-                    <table class="table table-bordered">
-                        {% for row in item.fileData.table %}
-                            <tr>
-                                {% for cell in row %}
-                                    <td>{{ cell }}</td>
-                                {% endfor %}
-                            </tr>
+                  {% endif %}
+                  {% if item.fileData.bullets %}
+                    <li class="list-group-item my-3">
+                      <ul>
+                        {% for bullet in item.fileData.bullets %}
+                          <li>{{ bullet }}</li>
                         {% endfor %}
-                    </table>
-                </li>
+                      </ul>
+                    </li>
+                  {% endif %}
+                  {% if item.fileData.links %}
+                    <li class="list-group-item my-3">
+                      {% for link in item.fileData.links %}
+                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.text }}</a><br />
+                      {% endfor %}
+                    </li>
+                  {% endif %}
+                  {% if item.fileData.table %}
+                    <li class="list-group-item my-3">
+                      <table class="table table-bordered">
+                        {% for row in item.fileData.table %}
+                          <tr>
+                            {% for cell in row %}
+                              <td>{{ cell }}</td>
+                            {% endfor %}
+                          </tr>
+                        {% endfor %}
+                      </table>
+                    </li>
+                  {% endif %}
+                  {% if item.fileData.message %}
+                    <hr />
+                    <li><strong>{{ item.fileData.message }}</strong></li>
+                  {% endif %}
+                </ul>
+              </div>
+              <hr />
             {% endif %}
 
-        {% if item.fileData.message  %}
-            <hr>
-            <li> <strong>{{item.fileData.message  }}</strong></li>
-
-            {% endif %}
-
-        </ul>
-    </div>
-            <hr></hr>
-{% endif %}
             {% if item.image_url %}
-                <img  src="{{ item.image_url }}" alt="Generated Image" style="max-width: 100%; height: 40vh; border-radius: 8px; margin-bottom: 10px;">
-
+              <img src="{{ item.image_url }}" alt="Generated Image" style="max-width: 100%; height: 40vh; border-radius: 8px; margin-bottom: 10px;" />
             {% endif %}
 
-<p class="message_display">{{ item.last_Data   }}</p>
+            {% if item.last_Data %}<p class="message_display">{{ item.last_Data }}</p>{% endif %}
+            {% if item.label %}<p class="message_display">{{ item.label }}</p>{% endif %}
+          </div>
+        {% empty %}
+          <p class="text-muted">No messages yet.</p>
+        {% endfor %}
 
+      </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function (){
-     let thinking= document.getElementById("thinking");
-        let solutions= document.getElementById("solution");
+      <!-- Message & Upload Form -->
+      <form method="POST" id="form" enctype="multipart/form-data" action="{% url 'submit_message' %}" class="text-center d-grid" style="grid-template-columns: 60% 10% 20%; gap: 20px;">
+        {% csrf_token %}
 
-         thinking.style.display="block"
-            solutions.style.display="none"
-
-        setTimeout(()=>{
-        thinking.style.display="none"
-            {#solutions.style.display="block"#}
-
-    },4000)
-         solutions.style.display="block"
-
-    })
-</script>
-
-
-
+        <div id="button-group" class="input-group mb-3" style="margin: 10px; box-shadow: 6px 3px 3px 3px rgba(13, 5, 1, 0.1); background-color: azure; position: relative;">
+          <textarea class="form-control" name="message" id="message" placeholder="Type your message here..." style="border-style: none; width: 100%; padding-right: 30px;"></textarea>
+          <label id="file-upload-label" class="input-group-text" for="file-upload" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; background-color: transparent; border: none;">
+            <i class="fa-solid fa-paperclip" id="onclick_icon" style="color: grey; font-size: 30px;"></i>
+          </label>
         </div>
 
+        <div id="upload_data" class="upload_data" style="justify-items: center; cursor: pointer; z-index: 100; width: 159px; border-radius: 10px; box-shadow: 4px 6px 7px rgba(255,255,44,0.3); background-color: rgba(211,211,211,0.8); margin: -120px -100px; height: 16vh;">
+          <p id="label_upload">file</p>
+          <p>image</p>
+          <p>Draw</p>
+        </div>
 
+        <div class="mb-3">
+          <button type="submit" id="button" class="btn btn-outline-primary" style="min-height: 50px; margin: 10px; border-radius: 0 10px 0 10px;">
+            <i class="fa-solid fa-paper-plane"></i> submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    {% endfor %}
+  <!-- jQuery (optional), Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-
-
-</div>
-{#end of display#}
-
-</script>
-
-
-
-
-
-{#learning data#}
-    <script>
-  document.addEventListener("DOMContentLoaded", function() {
-  // Check if the page was refreshed (reload)
-  if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-    // Send a request to clear messageData from the session
-    fetch("{% url 'clear_message_data' %}", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-        "Content-Type": "application/json"
-      },
-    })
-    .then(response => response.json())
-    .then(data => console.log("messageData cleared on refresh:", data))
-    .catch(error => console.error("Error clearing messageData:", error));
-  }
-});
-
-</script>
-
-
-
-
-
-
-        <!-- Message and File Upload Form -->
-        <form method="POST"  id="form" enctype="multipart/form-data" action="{% url 'submit_message' %}" style="text-align: center; display: grid; grid-template-columns: 60% 10% 20%; gap: 20px;">
-            {% csrf_token %}
-
-            <!-- Container for textarea and file input -->
-            <div class="input-group mb-3 " id="button-group" style="margin: 10px; box-shadow: 6px 3px 3px 3px rgb(13, 5, 1, 0.1); display: flex; background-color: azure; position: relative;">
-                <!-- Textarea for message -->
-
-                <textarea class="form-control" name="message" id="message" placeholder="Type your message here..." style="border-style: none; width: 100%; padding-right: 30px;"></textarea>
-
-                <!-- File Upload Button -->
-                <label id="file-upload-label" class="input-group-text" for="file-upload" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; background-color: transparent; border: none;">
-                    <i class="fa-solid fa-paperclip" id="onclick_icon" style="color: grey; font-size: 30px"></i>
-                </label>
-{#                <input type="file" id="file-upload" name="file" style="display: none;">#}
-
-            </div>
-
- <div class=" upload_data" id="upload_data" style="justify-items: center; cursor: pointer; z-index: 100;  width: 159px; border-radius:10px; box-shadow: 4px 6px 7px rgba(255,255,44, 88,0.3) ; background-color:rgba(211,211,211,0.8); margin: -120px -100px; height: 16vh  ">
-
-         <p id="label_upload" >file</p>
-              <p> image</p>
-              <p>Draw</p>
-          </div>
-
-
-            <!-- Submit Button -->
-            <div class="mb-3">
-                <button type="submit" id="button" class="btn btn-outline-primary" style="max-height:auto; min-height:50px ;margin: 10px 10px; border-radius: 0px 10px 0px 10px;">
-                    <i class="fa-solid fa-paper-plane"></i> submit
-                </button>
-
-                 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    let submitButton = document.getElementById("button"); // Submit button
-    let container = document.querySelector(".main-container"); // The scrollable container
-
-    submitButton.addEventListener("click", () => {
+  <script>
+    // Per-card spinner simulation for website results
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll('[id^="results-"]').forEach(function (resultsEl) {
+        const id = resultsEl.id.split('-')[1];
+        const spinner = document.getElementById('spinner-' + id);
+        if (!spinner) return;
+        spinner.classList.remove('d-none');
+        resultsEl.classList.add('d-none');
         setTimeout(() => {
-            container.scrollTop = container.scrollHeight; // Scroll to the bottom
-        }, 100); // Small delay to allow rendering
+          spinner.classList.add('d-none');
+          resultsEl.classList.remove('d-none');
+        }, 2000);
+      });
     });
-});
-</script>
-            </div>
-        </form>
 
-<script>
+    // Upload popover + fetch upload to Django view
     document.addEventListener("DOMContentLoaded", () => {
-    let fileIcon = document.getElementById("onclick_icon");
-    let fileData = document.getElementById("upload_data");
-    let uploadLabel = document.getElementById("label_upload");
-    let submitButton = document.querySelector('button[type="submit"]');
-    let textAreaInput = document.getElementById("message");
-    let container = document.getElementsByClassName("main-container")[0]; // Corrected this line
+      const fileIcon = document.getElementById("onclick_icon");
+      const fileData = document.getElementById("upload_data");
+      const uploadLabel = document.getElementById("label_upload");
+      const submitButton = document.getElementById("button");
+      const container = document.querySelector(".main-container");
 
-    const defaultText = "Submit";
-    const uploadText = "Uploading...";
-    const uploadDocument = "Upload";
+      const defaultText = "Submit";
+      const uploadText = "Uploading...";
+      const uploadDocument = "Upload";
 
+      fileIcon.addEventListener("click", () => {
+        fileData.style.display = fileData.style.display === "none" || fileData.style.display === "" ? "block" : "none";
+      });
 
-
-    // Toggle file upload input visibility
-    fileIcon.addEventListener("click", () => {
-        fileData.style.display = fileData.style.display === "none" ? "block" : "none";
-    });
-
-    uploadLabel.addEventListener("click", () => {
-        let fileInput = document.createElement("input");
+      uploadLabel.addEventListener("click", () => {
+        const fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.name = "upload_datafiles";
-        fileInput. enctype="multipart/form-data";
-        fileInput.accept = "*/*"; // Accept any file type
+        fileInput.accept = "*/*";
         fileInput.style.display = "none";
-
-
-
-
         document.body.appendChild(fileInput);
-        fileInput.click(); // Open file dialog
+        fileInput.click();
 
         fileInput.addEventListener("change", () => {
-            if (fileInput.files.length > 0) {
-                let send_file = fileInput.files[0]; // Corrected this line
-                let fileName = send_file.name; // Corrected this line
-                {#textAreaInput.value = fileName; // Show file name in textarea#}
-                fileData.style.display="none"
-                // Show "Uploading..." state
-                submitButton.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${uploadText}`;
+          if (fileInput.files.length > 0) {
+            const send_file = fileInput.files[0];
+            fileData.style.display = "none";
+            submitButton.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${uploadText}`;
 
-                // Make sure `send_file` is properly defined
-                let formData = new FormData();
-                formData.append("file", send_file); // Corrected this line
+            const formData = new FormData();
+            formData.append("file", send_file);
 
-                fetch("{% url 'upload_datafiles' %}", {  // Fixed Django URL syntax
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFToken": getCSRFToken(), // Function to retrieve CSRF token
-                    },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Success:", data);
-                    submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${uploadText}`;
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${defaultText}`;
-                });
-
-                // Simulate upload delay (2s)
-                setTimeout(() => {
-                    submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${uploadDocument}`;
-                }, 2000);
-            } else {
+            fetch("{% url 'upload_datafiles' %}", {
+              method: "POST",
+              body: formData,
+              headers: { "X-CSRFToken": getCSRFToken() },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Success:", data);
+                submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${uploadText}`;
+              })
+              .catch((error) => {
+                console.error("Error:", error);
                 submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${defaultText}`;
-            }
+              });
 
-            document.body.removeChild(fileInput); // Cleanup
+            setTimeout(() => {
+              submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${uploadDocument}`;
+            }, 2000);
+          } else {
+            submitButton.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${defaultText}`;
+          }
+          document.body.removeChild(fileInput);
         });
+      });
+
+      function getCSRFToken() {
+        const el = document.querySelector("[name=csrfmiddlewaretoken]");
+        return el ? el.value : "";
+      }
+
+      // Scroll to bottom after form submit
+      document.getElementById("form").addEventListener("submit", () => {
+        setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+      });
+
+      // Also scroll when clicking submit immediately
+      submitButton.addEventListener("click", () => {
+        setTimeout(() => { container.scrollTop = container.scrollHeight; }, 200);
+      });
     });
 
-    // Function to get CSRF token from a meta tag or other hidden input
-    function getCSRFToken() {
-        return document.querySelector("[name=csrfmiddlewaretoken]").value;
-    }
-
-    // Scroll to bottom after form submission
-    submitButton.addEventListener("click", () => {
-        container.scrollTo(0, document.body.scrollHeight);
+    // Clear messageData on reload (modern API)
+    document.addEventListener("DOMContentLoaded", function () {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') {
+        fetch("{% url 'clear_message_data' %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => console.log("messageData cleared on refresh:", data))
+          .catch((error) => console.error("Error clearing messageData:", error));
+      }
     });
-});
-
-</script>
-
-        <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("form");
-    const container = document.querySelector(".main-container");
-
-    form.addEventListener("submit", () => {
-      // Give the browser a moment to insert the new message
-      setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-      }, 50);
-    });
-  });
-</script>
-
-
-
-
-    </div>
-</div>
-
+  </script>
 </body>
 </html>
