@@ -1,2 +1,2 @@
-web: gunicorn FileReader.wsgi
+web: gunicorn FileReader.FileReader.wsgi
 
