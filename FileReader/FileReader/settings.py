@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "myFileReader",
+    "FileReader.myFileReader",
 ]
 
 # ✅ Middleware
@@ -46,7 +46,7 @@ MIDDLEWARE = [
 ]
 
 # ✅ URL config
-ROOT_URLCONF = 'FileReader.urls'
+ROOT_URLCONF = 'FileReader.FileReader.urls'
 
 # ✅ Templates
 TEMPLATES = [
