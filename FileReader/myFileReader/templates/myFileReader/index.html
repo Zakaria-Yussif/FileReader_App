@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FileReader</title>
-
+<link rel="icon" type="image/png" href="{% static 'image/zack.png' %}">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- App CSS -->
@@ -69,7 +69,7 @@
     .message.visible { opacity: 1; }
 
     @media (max-width: 1008px) {
-      #form { min-width: 90vw; }
+      #form { min-width: 96vw ; margin-top:-20px}
       .body { grid-template-columns: 0% 100%; position: fixed; max-height: 89vh; }
       .form-control { min-width: 100%; }
       #sidebarCollapse { height: 20px; width: 0; visibility: hidden; overflow: hidden; }
@@ -82,7 +82,11 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg bg-body-white">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Navbar</a>
+<a class="navbar-brand" href="#">
+  <img src="{% static 'image/zack.png' %}"  class="img-fluid" style="max-height:50px; width: 50px">
+</a>
+
+
 
       <!-- One toggler controls both nav and sidebar -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".dual-collapse" aria-controls="navbarCollapse sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">

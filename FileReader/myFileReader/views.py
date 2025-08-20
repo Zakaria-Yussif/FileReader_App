@@ -77,18 +77,13 @@ messageInfo = ""
 fill_mask = pipeline("fill-mask", model="bert-base-uncased")
 nlp = spacy.load("en_core_web_sm")
 
-
 def index(request):
     """Render the homepage with stored messages"""
 
-    # if PlotImage.objects.exists():
-    #     print("image exists")
-    #     image = PlotImage.objects.all()
-    #     print("image", image    )
-    # else:
-    #     print("image does not exist")
-
-    default_message = "Write Something OR upload a file \nYou can upload pdf files, solve linear/quadratic equations and generate bar graphs"
+    default_message = (
+        "Write Something OR upload a file \n"
+        "You can upload pdf files, solve linear/quadratic equations and generate bar graphs"
+    )
 
     # Retrieve messageData from session or set to empty list
     messageData = request.session.get('messageData', [])
@@ -106,7 +101,7 @@ def index(request):
 
     print("Current session messageData:", messageData)
 
-    return render(request, 'myFileReader/index.html', {'messageData': messageData})
+    return render(request, 'myFileReader/index.html', {'message': messageData})
 
 
 # def read_excel_file():
@@ -217,8 +212,11 @@ def submit_message(request):
         data_input = re.sub(r"\s+", " ", data_input).strip()
 
         if not data_input:
-              messageData.append({"message": "⚠️ Please enter a valid sentence!"})
-              return render(request, 'myFileReader/index.html', {'messageData': messageData})
+            if isinstance(messageData, list):
+                messageData.append({"message": "⚠️ Please enter a valid sentence!"})
+            else:
+                messageData = [{"message": "⚠️ Please enter a valid sentence!"}]
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
         message = deepcopy(data_input)
         doc = nlp(data_input)
@@ -609,7 +607,7 @@ def submit_message(request):
                         search_weather_pattern= re.search(weather_pattern, best_match, re.IGNORECASE)
 
 
-                        if search_weather_pattern  or "weather" in response[0].lower():
+                        if search_weather_pattern  or "weather"  in response[0].lower():
                             from .api import get_weather, get_location
                             city = get_location()
 
