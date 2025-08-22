@@ -51,7 +51,10 @@ RUN pip install --no-cache-dir \
     python-docx==1.2.0 \
     deep-translator==1.11.4 \
     beautifulsoup4>=4.12 \
-    langcodes==3.5.0
+    tensorflow==2.19.0 \
+    tensorflow==2.19.0 \
+    langcodes==3.5.0 \
+    keras
 
 # Download spaCy model
 RUN python -m spacy download en_core_web_sm

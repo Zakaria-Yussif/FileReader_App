@@ -267,33 +267,33 @@ def submit_message(request):
         tokens[missing_word_position] = predicted_word
         complete_sentence = " ".join(tokens).strip()
 
-
-        messageData.append({"message": message, "id": 123})
-        request.session['messageData'] = messageData
-        detect_language = detect_language(data_input)
-
-
-
-
-        if matches_none_English:
-            messageData.append({"message":complete_sentence})
-            from .utils import translate_text
-            full_language_name = langcodes.Language.get(detect_language).language_name()
-            translator =translate_text(data_input,target_language="en")
-
-            translator.text= translator.text
-            translator.src=translator.src
-            translator.dest=translator.dest
-            trans_message = {
-               "message": f"This is written in {full_language_name}",
-               "user_input": data_input,
-                "translator": f"This is the translated sentence in English:",
-                "translator_text": translator.text
-            }
-
-            messageData.append({"translated": trans_message })
+        if isinstance(messageData, list):
+            messageData.append({"message": message, "id": 123})
             request.session['messageData'] = messageData
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+            detect_language = detect_language(data_input)
+
+
+
+
+        # if matches_none_English:
+        #     messageData.append({"message":complete_sentence})
+        #     from .utils import translate_text
+        #     full_language_name = langcodes.Language.get(detect_language).language_name()
+        #     translator =translate_text(data_input,target_language="en")
+        #
+        #     translator.text= translator.text
+        #     translator.src=translator.src
+        #     translator.dest=translator.dest
+        #     trans_message = {
+        #        "message": f"This is written in {full_language_name}",
+        #        "user_input": data_input,
+        #         "translator": f"This is the translated sentence in English:",
+        #         "translator_text": translator.text
+        #     }
+
+            # messageData.append({"translated": trans_message })
+            # request.session['messageData'] = messageData
+            # return render(request, 'myFileReader/index.html', {'messageData': messageData})
         if confirmation_pattern:
             messageData=request.session['messageData']
             last_Data= messageData[-2] if len(messageData) >= 2 else "none"
@@ -562,22 +562,47 @@ def submit_message(request):
 
             # If prediction did not occur (fallback to pattern matching)
             from .chat import pairs
-            messageData = request.session.get('messageData', [])
-            pairs= pairs
+            if matches_none_English:
+                from .utils import translate_text
+                detected_language = None
 
-            patterns = [pattern for pattern, _ in pairs]
-            best_match, score, _ = process.extractOne(data_input, patterns, scorer=fuzz.partial_ratio)
-            print("bess",best_match)
-            print(score)
+
+                for code, name in LANGUAGES.items():
+                    name_lower = name.lower()
+                    detected_language=code
+                    print("detected_language",detected_language)
+
+                full_language_name = langcodes.Language.get(detect_language).language_name()
+                print(full_language_name)
+                translator = translate_text(data_input, target_language="en")
+
+                translator.text = translator.text
+                translator.src = translator.src
+                translator.dest = translator.dest
+                print("text", translator.text)
+
+
+                messageData = request.session.get('messageData', [])
+                pairs= pairs
+
+                patterns = [pattern for pattern, _ in pairs]
+
+                best_match, score, _ = process.extractOne(translator.text, patterns, scorer=fuzz.partial_ratio)
+                print("bess",best_match)
+                print(score)
 
 
             # If a pattern match is found
-            if score > 85:
-                for pattern, response in pairs:
+                if score > 75:
+                  for pattern, response in pairs:
                     if pattern == best_match:
 
+                        translator = translate_text(response[0], target_language=full_language_name)
+                        translator.text = translator.text
+                        translator.src = translator.src
+                        print("textDD", translator.text)
+                        messageData.append({"message": translator.text})
 
-                        messageData.append({"message": response[0]})
                         request.session['messageData'] = messageData
 
                         weather_pattern = r"""(?ix)                 # ignore case, allow verbose mode
@@ -634,8 +659,71 @@ def submit_message(request):
 
 
                         return render(request, 'myFileReader/index.html', {'messageData': messageData})
+            else:
+                    messageData = request.session.get('messageData', [])
+                    pairs = pairs
 
-            # 🔹 Predict missing word
+                    patterns = [pattern for pattern, _ in pairs]
+
+                    best_match, score, _ = process.extractOne(data_input, patterns, scorer=fuzz.partial_ratio)
+                    print("bess", best_match)
+                    print(score)
+
+                    # If a pattern match is found
+                    if score > 75:
+                        for pattern, response in pairs:
+                            if pattern == best_match:
+
+                                messageData.append({"message": response[0]})
+                                request.session['messageData'] = messageData
+
+                                weather_pattern = r"""(?ix)                 # ignore case, allow verbose mode
+                                                \b(
+                                                    (what('|s| is)?\s*(the\s*)?(weather|forecast|weather\s+report)) |
+                                                    (can|could|will|would|do|does)\s+you\s+(tell|give)\s+me\s+(the\s*)?(weather|forecast) |
+                                                    (is|was|will|would|does|do|did|are|am|were|being|be|has|have|had)\s+(it|the\s+weather)\s+(like|raining|snowing|sunny|cloudy|hot|cold|windy|nice) |
+                                                    (rain|snow|sun|sunny|clouds|cloudy|storm|hot|cold|temperature|windy|humidity)
+                                                )
+                                                (
+                                                    \s+(today|tomorrow|tonight|this\s+(morning|afternoon|evening|weekend)|on\s+\w+day)?
+                                                )?
+                                                (
+                                                    \s+(in|for)\s+[a-zA-Z\s]+     # simple location capture
+                                                )?
+                                                \??
+                                            """
+                                findOne = "(how do|what's the method for) calculating the area of a triangle\??"
+                                findTwo = "how can I (find|calculate) the area of a triangle\??"
+                                findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
+                                findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
+
+                                search_weather_pattern = re.search(weather_pattern, best_match, re.IGNORECASE)
+
+                                if search_weather_pattern or "weather" in response[0].lower():
+                                    from .api import get_weather, get_location
+                                    city = get_location()
+
+                                    if city:
+                                        weather = get_weather(city)
+                                        print("weather", weather)
+                                        messageData.append({"weather": weather})
+                                        # request.session['messageData'] = messageData
+
+
+                                elif best_match == findOne or best_match == findTwo:
+                                    from .drawShapes import draw_triangle
+                                    messageData = draw_triangle(messageData, data_input)
+                                    # request.session['messageData'] = messageData
+
+                                elif best_match == findRectangleTwo:
+                                    from .drawShapes import draw_rectangle
+                                    messageData = draw_rectangle(messageData, data_input)
+                                    messageData.append(messageData)
+                                    # request.session['messageData'] = messageData
+
+                                return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+        # 🔹 Predict missing word
 
             from .utils import google_search
             query = data_input
