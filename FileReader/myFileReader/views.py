@@ -74,6 +74,7 @@ messageData2 = []
 
 graphData = []
 messageInfo = ""
+Non_English = False
 fill_mask = pipeline("fill-mask", model="bert-base-uncased")
 nlp = spacy.load("en_core_web_sm")
 
@@ -119,668 +120,797 @@ def index(request):
    # request.session['graphData'] = graphData
    # return render(request, 'myFileApp/index.html', {'graphData': graphData})
 
-
-
 def submit_message(request):
-    """Processes user input and generates a bar chart"""
+    """Processes user input and generates responses (translation-first, robust returns)."""
     global messageData
     global messageInfo
     global complete
-    if request.method == "POST":
-        data_inputData = request.POST.get('message', '').strip()
-        # file_input=request.FILES['file']
-        from .utils import  detect_language
+    global data_input
+    global Non_English
+    global detected_language
 
+    from django.shortcuts import render
+    from django.http import JsonResponse
 
-        data_input = re.sub(r"\s+", " ", data_inputData).strip()
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "Invalid method"}, status=405)
 
-        print("daa",data_input)
-        actions = ["draw", "generate","show","solve", "calculate", "compute", "if", "determine", "evaluate", "work out", "find"]
-        shapes = ["triangle", "square", "circle", "rectangle", "star"]
-
-        action_pattern = r"|".join([re.escape(a) for a in actions])
-        shape_pattern = r"|".join([f"{s}s?" for s in shapes])
-        draw_shape_regex = rf"\b(?:{action_pattern})\b.*?\b({shape_pattern})\b"  # group the shape
-
-        match_draw_shapes = re.search(draw_shape_regex, data_input, re.IGNORECASE)
-
-        easy_pattern = r"\b(write|generate|create|need).*?\bessay\b"
-        translate_pattern = r"(?:please\s+)?(?:can you\s+)?translate\s+(.+?)\s+(?:to|in|into)\s+(\w+)"
-
-        pattern = r"""^Solve for x: \d+x \+ \d+ = \d+,x = -?\d+$|
-                                  ^John has \d+ apples and buys \d+ more\. How many apples does he have\?,-?\d+$|
-                                  ^Find the derivative of \d+x\^\d+,-?\d+x\^\d+$|
-                                  ^Evaluate f\(x\) = x\^2 - \d+x \+ \d+ at x = -?\d+,f\(-?\d+\) = -?\d+$"""
-
-
-          # Output: True
-
-        confirmation_pattern = r"\b(yes|yeah|yep|sure|ok|okay|affirmative|absolutely|certainly|add\s+image\s+\d+)\b"
-
-        Bar_pattern = r"^\s*\w+\s*:\s*\d+\s*(,\s*\w+\s*:\s*\d+\s*)*$"
-        linear_pattern = r"^([-+]?\d*\.?\d+)?\s*\*?\s*x\s*([-+]?\d*\.?\d+)?\s*\*?\s*y?\s*([-+]?\d+(\.\d+)?)?\s*=\s*([-+]?\d*\.?\d+)$"
-        # linear_pattern2 = linear_pattern = r"^y\s*=\s*([-+]?\d*\.?\d+)?\s*\*?\s*x\s*([-+]?\s*\d+(\.\d+)?)?$"
-        diseases_pattern = re.compile(
-            r"""
-            ^                              # start of string
-            (?:.*?\b(?:have|got|experiencing|suffering\s+from)\b)  # any lead‑in
-            \s*
-            (?P<symptoms>                  # capture all following text as “symptoms”
-                (?:                        # non‑capturing group for repetition
-                    [^,;/\|\n\r]+?         # any chars except separators
-                )
-                (?:                        # then zero or more of…
-                    (?:[,;/\|\n\r]|       #   any one of: comma, semicolon, slash, pipe, newline
-                     \band\b|              #   or the word “and”
-                     \bor\b|               #   or the word “or”
-                     \band/or\b)           #   or “and/or”
-                    [^,;/\|\n\r]+?         #   followed by more symptom text
-                )*
-            )
-            \s*$                           # optional trailing space, end
-            """,
-            re.IGNORECASE | re.VERBOSE
-        )
-        summarise=r"\b(?:please\s*)?(?:can|could|would)?\s*(you\s*)?(please\s*)?(summarize|summarise)\b"
-        # solve_pattern = re.compile(r'^[0-9a-zA-Z\+\-\*/\^\=\.\s\(\)]+$')
-
-        quadratic_pattern = r"^([-+]?\d*\.?\d+|\d+)x\^2\s*([-+]?\d*\.?\d+|\d*)x\s*([-+]?\d*\.?\d+|\d+)?$"
-        quadratic_pattern_two = r"^([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?\s*(?:[:;,]\s*|\s*and\s*)\s*([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?$"
-        non_english_pattern = r"[^\x00-\x7F]"
-        draw_images_patternData = r"(?:please\s*)?(?:can|could|would)?\s*(?:you\s*)?(?:please\s*)?(draw|show|generate|create)\s+(?:an?\s*)?(?:image|picture|photo|drawing)?\s*(?:of|about)?\s*(?P<description>.+)"
-
-        match_summarise=re.search(summarise, data_input, re.IGNORECASE)
-        # match_drawShapes=re.search(draw_pattern,data_input, re.IGNORECASE)
-        matches_none_English = re.findall(non_english_pattern, data_input)
-        match_essay = re.search(easy_pattern, data_input, re.IGNORECASE)
-        Bar_match = re.search(Bar_pattern, data_input, re.IGNORECASE)
-        match_translate_Data = re.search(translate_pattern, data_input, re.IGNORECASE)
-        match_linear = re.search(linear_pattern, data_input, re.IGNORECASE)
-        match_quadratic = re.search(quadratic_pattern, data_input, re.IGNORECASE)
-        match_quadratic_two = re.search(quadratic_pattern_two, data_input, re.IGNORECASE)
-        match_draw_imageData=re.search(draw_images_patternData, data_input.strip(), re.IGNORECASE)
-        match_disease=re.findall(diseases_pattern,data_input)
-        match_solve_partern=re.search(pattern, data_input, re.IGNORECASE)
-
-        match_translate= re.search(confirmation_pattern, data_input, re.IGNORECASE)
-
+    # ---- 1) Read & normalize raw input ----
+    raw = (request.POST.get('message', '') or '').strip()
+    original_input = re.sub(r"\s+", " ", raw).strip()
+    if not original_input:
+        # Ensure messageData is a list
         messageData = request.session.get('messageData', [])
-        # Process text with SpaCy
-        data_input = data_input.lower()
+        if not isinstance(messageData, list):
+            messageData = [messageData] if isinstance(messageData, dict) else []
+        messageData.append({"message": "⚠️ Please enter a valid sentence!"})
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-        # Clean input
-        data_input = re.sub(r"\s+", " ", data_input).strip()
+    # ---- 2) Ensure session messageData is a list ----
+    messageData = request.session.get('messageData', [])
+    if not isinstance(messageData, list):
+        messageData = [messageData] if isinstance(messageData, dict) else []
 
-        if not data_input:
-            if isinstance(messageData, list):
-                messageData.append({"message": "⚠️ Please enter a valid sentence!"})
-            else:
-                messageData = [{"message": "⚠️ Please enter a valid sentence!"}]
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+    # ---- 3) Detect & translate: make input_data ENGLISH if not English ----
+    # Rely on translator's .src for true language code; do NOT use a detect_language function here.
+    from .utils import translate_text
+    input_data = original_input        # canonical working text (English when translated)
+    detected_language = "en"           # original language code, e.g. 'fr', 'ar', 'en'
+    Non_English = False
+    full_language_name = "English"
 
-        message = deepcopy(data_input)
-        doc = nlp(data_input)
-        has_subject, has_verb, has_object = (False, False, False)
-        missing_word_position = None
-        tokens = [token.text for token in doc]
-        for token in doc:
-            if token.dep_ in ("nsubj", "nsubjpass"):
-                has_subject = True
-            if token.pos_ in ("VERB", "AUX"):
-                has_verb = True
-            if token.dep_ in ("dobj", "attr", "ccomp", "xcomp"):
-                has_object = True
+    try:
+        tr = translate_text(original_input, target_language="en")
+        src_code = (getattr(tr, "src", None) or "en").lower()
+        if src_code != "en":
+            Non_English = True
+            detected_language = src_code
+            input_data = getattr(tr, "text", None) or original_input
+            try:
+                full_language_name = langcodes.Language.get(src_code).language_name()
+            except Exception:
+                full_language_name = src_code
+        else:
+            detected_language = "en"
+            input_data = original_input
+            full_language_name = "English"
+        print(f"[Lang] detected={detected_language} ({full_language_name})")
+        if Non_English:
+            print(f"[Lang] translated -> EN: {input_data}")
+    except Exception as e:
+        # Translation/detection failed: proceed with original
+        Non_English = False
+        detected_language = "en"
+        input_data = original_input
+        full_language_name = "English"
+        print(f"[Lang] translation failed, using original. {e}")
 
-        # Insert [MASK] where necessary
-        if not has_subject:
-            missing_word_position = 0
-            tokens.insert(0, "[MASK]")
-        elif not has_verb:
-            for i, token in enumerate(doc):
-                if token.pos_ == "NOUN" or token.dep_ == "nsubj":
-                    missing_word_position = i + 1
-                    tokens.insert(i + 1, "[MASK]")
-                    break
-        elif not has_object:
-            for i, token in enumerate(doc):
-                if token.pos_ == "VERB":
-                    missing_word_position = i + 1
-                    tokens.insert(i + 1, "[MASK]")
-                    break
+    # ---- 4) Use English transparently for ALL downstream logic ----
+    data_input = input_data  # your code below uses data_input everywhere
 
-        if missing_word_position is None:
-            tokens.append("[MASK]")
-            missing_word_position = len(tokens) - 1
+    # Optional: keep some context
+    request.session["original_input"] = original_input
+    request.session["input_data"] = input_data
+    request.session["input_lang"] = detected_language
+    request.session["input_lang_name"] = full_language_name
 
-        masked_sentence = " ".join(tokens)
-        masked_sentence = masked_sentence.replace("[MASK]", "", masked_sentence.count("[MASK]") - 1)
+    # ---- 5) Process text with SpaCy + BERT fill-mask suggestion ----
+    # Lowercase for NLP processing (keep original_input shown back to user)
+    data_input = data_input.lower()
+    doc = nlp(data_input)
 
-        # Error if more than one [MASK] token
-        if masked_sentence.count("[MASK]") != 1:
-            messageData.append({"message": "⚠️ Error: More than one [MASK] token found."})
-            return render(request, 'myFileApp/index.html', {'messageData': messageData})
+    has_subject, has_verb, has_object = (False, False, False)
+    missing_word_position = None
+    tokens = [token.text for token in doc]
 
-        # 🔹 Predict missing word
+    for token in doc:
+        if token.dep_ in ("nsubj", "nsubjpass"):
+            has_subject = True
+        if token.pos_ in ("VERB", "AUX"):
+            has_verb = True
+        if token.dep_ in ("dobj", "attr", "ccomp", "xcomp"):
+            has_object = True
 
+    # Insert [MASK] where necessary
+    if not has_subject:
+        missing_word_position = 0
+        tokens.insert(0, "[MASK]")
+    elif not has_verb:
+        for i, t in enumerate(doc):
+            if t.pos_ == "NOUN" or t.dep_ == "nsubj":
+                missing_word_position = i + 1
+                tokens.insert(i + 1, "[MASK]")
+                break
+    elif not has_object:
+        for i, t in enumerate(doc):
+            if t.pos_ == "VERB":
+                missing_word_position = i + 1
+                tokens.insert(i + 1, "[MASK]")
+                break
+
+    if missing_word_position is None:
+        tokens.append("[MASK]")
+        missing_word_position = len(tokens) - 1
+
+    masked_sentence = " ".join(tokens)
+    masked_sentence = masked_sentence.replace("[MASK]", "", masked_sentence.count("[MASK]") - 1)
+
+    if masked_sentence.count("[MASK]") != 1:
+        messageData.append({"message": "⚠️ Error: More than one [MASK] token found."})
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    # Predict missing word
+    try:
         prediction = fill_mask(masked_sentence)
         predicted_word = prediction[0]["token_str"].strip()
+    except Exception as e:
+        predicted_word = ""
+        print("fill-mask failed:", e)
+    if predicted_word:
         tokens[missing_word_position] = predicted_word
-        complete_sentence = " ".join(tokens).strip()
+    complete_sentence = " ".join(tokens).strip()
 
-        if isinstance(messageData, list):
-            messageData.append({"message": message, "id": 123})
-            request.session['messageData'] = messageData
-            detect_language = detect_language(data_input)
+    # Show the user's original message (not lowercased) in the chat history
+    messageData.append({"message": original_input, "id": 123})
+    request.session['messageData'] = messageData
 
+    # ---- 6) Intent patterns & matches (operate on EN data_input) ----
+    actions = ["draw", "generate", "show", "solve", "calculate", "compute", "if",
+               "determine", "evaluate", "work out", "find"]
+    shapes = ["triangle", "square", "circle", "rectangle", "star"]
 
+    action_pattern = r"|".join([re.escape(a) for a in actions])
+    shape_pattern = r"|".join([f"{s}s?" for s in shapes])
+    draw_shape_regex = rf"\b(?:{action_pattern})\b.*?\b({shape_pattern})\b"
 
+    easy_pattern = r"\b(write|generate|create|need).*?\bessay\b"
+    translate_pattern = r"(?:please\s+)?(?:can you\s+)?translate\s+(.+?)\s+(?:to|in|into)\s+(\w+)"
 
-        # if matches_none_English:
-        #     messageData.append({"message":complete_sentence})
-        #     from .utils import translate_text
-        #     full_language_name = langcodes.Language.get(detect_language).language_name()
-        #     translator =translate_text(data_input,target_language="en")
-        #
-        #     translator.text= translator.text
-        #     translator.src=translator.src
-        #     translator.dest=translator.dest
-        #     trans_message = {
-        #        "message": f"This is written in {full_language_name}",
-        #        "user_input": data_input,
-        #         "translator": f"This is the translated sentence in English:",
-        #         "translator_text": translator.text
-        #     }
+    # bar data like "A:10, B:20"
+    Bar_pattern = r"^\s*\w+\s*:\s*\d+\s*(,\s*\w+\s*:\s*\d+\s*)*$"
+    # general linear eq
+    linear_pattern = r"^([-+]?\d*\.?\d+)?\s*\*?\s*x\s*([-+]?\d*\.?\d+)?\s*\*?\s*y?\s*([-+]?\d+(\.\d+)?)?\s*=\s*([-+]?\d*\.?\d+)$"
 
-            # messageData.append({"translated": trans_message })
-            # request.session['messageData'] = messageData
-            # return render(request, 'myFileReader/index.html', {'messageData': messageData})
-        if confirmation_pattern:
-            messageData=request.session['messageData']
-            last_Data= messageData[-2] if len(messageData) >= 2 else "none"
-            print("last_Data", last_Data)
+    diseases_pattern = re.compile(
+        r"""
+        ^                             
+        (?:.*?\b(?:have|got|experiencing|suffering\s+from)\b)
+        \s*
+        (?P<symptoms>
+            (?:
+                [^,;/\|\n\r]+?
+            )
+            (?:
+                (?:[,;/\|\n\r]|
+                 \band\b|
+                 \bor\b|
+                 \band/or\b)
+                [^,;/\|\n\r]+?
+            )*
+        )
+        \s*$
+        """,
+        re.IGNORECASE | re.VERBOSE
+    )
 
+    summarise = r"\b(?:please\s*)?(?:can|could|would)?\s*(you\s*)?(please\s*)?(summarize|summarise)\b"
+    quadratic_pattern = r"^([-+]?\d*\.?\d+|\d+)x\^2\s*([-+]?\d*\.?\d+|\d*)x\s*([-+]?\d*\.?\d+|\d+)?$"
+    quadratic_pattern_two = r"^([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?\s*(?:[:;,]\s*|\s*and\s*)\s*([-+]?\d*\.?\d+|\d+)\s*x\^2\s*([-+]?\d*\.?\d+|\d+)?\s*x\s*([-+]?\d*\.?\d+|\d+)?$"
+    draw_images_patternData = r"(?:please\s*)?(?:can|could|would)?\s*(?:you\s*)?(?:please\s*)?(draw|show|generate|create)\s+(?:an?\s*)?(?:image|picture|photo|drawing)?\s*(?:of|about)?\s*(?P<description>.+)"
 
-        if match_solve_partern:
-            from .mathModel import predict
-            data_inputData=predict(question=data_input)
-            print("data_input",data_input)
-            content={
-                  "equation": data_input,
-                  "step3": data_inputData,
-                  "answer": data_inputData,
-                }
-            messageData.append({"solution":content})
+    match_summarise = re.search(summarise, data_input, re.IGNORECASE)
+    match_essay = re.search(easy_pattern, data_input, re.IGNORECASE)
+    Bar_match = re.search(Bar_pattern, data_input, re.IGNORECASE)
+    match_translate_Data = re.search(translate_pattern, data_input, re.IGNORECASE)
+    match_linear = re.search(linear_pattern, data_input, re.IGNORECASE)
+    match_quadratic = re.search(quadratic_pattern, data_input, re.IGNORECASE)
+    match_quadratic_two = re.search(quadratic_pattern_two, data_input, re.IGNORECASE)
+    match_draw_imageData = re.search(draw_images_patternData, data_input.strip(), re.IGNORECASE)
+    match_disease = re.findall(diseases_pattern, data_input)
+    match_draw_shapes = re.search(draw_shape_regex, data_input, re.IGNORECASE)
 
+    # ---- 7) Solve-by-pattern (math model quick path) ----
+    pattern_solve = r"""^Solve for x: \d+x \+ \d+ = \d+,x = -?\d+$|
+                        ^John has \d+ apples and buys \d+ more\. How many apples does he have\?,-?\d+$|
+                        ^Find the derivative of \d+x\^\d+,-?\d+x\^\d+$|
+                        ^Evaluate f\(x\) = x\^2 - \d+x \+ \d+ at x = -?\d+,f\(-?\d+\) = -?\d+$"""
+    match_solve_partern = re.search(pattern_solve, data_input, re.IGNORECASE)
 
-        if match_essay:
+    if match_solve_partern:
+        from .mathModel import predict
+        sol = predict(question=data_input)
+        content = {"equation": data_input, "step3": sol, "answer": sol}
+        messageData.append({"solution": content})
+        request.session['messageData'] = messageData
+
+    # ---- 8) Essay generator ----
+    if match_essay:
+        messageData.append({"message": complete_sentence})
+        from .utils import generate_essay
+        essayData = generate_essay(data_input)
+        messageData.append({"message": essayData})
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    # ---- 9) Image search (list links) ----
+    if match_draw_imageData:
+        from .draw_images import google_search_image
+        description = match_draw_imageData.group("description").strip()
+        query = description
+        results = google_search_image(query)
+        if isinstance(results, list):
+            for index, result in enumerate(results):
+                link = result.get("link") if isinstance(result, dict) else None
+                if not link:
+                    continue
+                label = f"image{index + 1}:link"
+                messageData.append({"image_url": link, "label": label})
+            messageData.append({"last_Data": "Which of the following images would you like me to draw for you?"})
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    # ---- 10) Draw shapes ----
+    if match_draw_shapes:
+        shape = match_draw_shapes.group(1).lower().rstrip('s')
+        if shape == "triangle":
             messageData.append({"message": complete_sentence})
-            from .utils import generate_essay
-            essayData = generate_essay(data_input)
-            messageData.append({"message": essayData})
-            # request.session['messageData'] = messageData
+            from .drawShapes import draw_triangle
+            messageData = draw_triangle(messageData, data_input)
+        elif shape == "square":
+            messageData.append({"message": complete_sentence})
+            from .drawShapes import draw_square
 
+            # remember where new items will start
+            start_len = len(messageData)
 
+            # draw_square is expected to append to messageData and return it
+            messageData = draw_square(messageData, data_input)
 
+            # If original input wasn't English, translate ONLY the newly-added strings
+            if Non_English and detected_language != "en":
+                from .utils import translate_text
+
+                def _tx(s: str) -> str:
+                    try:
+                        tr = translate_text(s,
+                                            target_language=detected_language)  # detected_language is a CODE like 'fr'
+                        return getattr(tr, "text", None) or s
+                    except Exception:
+                        return s
+
+                # Translate strings in the items added by draw_square
+                for i in range(start_len, len(messageData)):
+                    item = messageData[i]
+                    if isinstance(item, dict):
+                        # translate top-level string fields
+                        for k, v in list(item.items()):
+                            if isinstance(v, str):
+                                item[k] = _tx(v)
+                            elif isinstance(v, dict):
+                                # translate strings one level deep (e.g., solution subfields)
+                                item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                            elif isinstance(v, list):
+                                item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                    elif isinstance(item, str):
+                        messageData[i] = _tx(item)
+
+            request.session['messageData'] = messageData
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
-        # elif math_model:
-        #    messageData.append({"message": complete_sentence})
-        #      from .mathModel import solve_math
-        #      data_inputData=solve_math(data_input)
-        #      print("data_input",data_input)
-        #      content={
-        #          "equation": data_input,
-        #          "step3": data_inputData,
-        #          "answer": data_inputData,
-        #      }
-        #      messageData.append({"solution":content})
-        elif match_draw_imageData:
-            from .draw_images import google_search_image
-            description=match_draw_imageData.group("description").strip()
 
-            print("dataDected",description)
-            data_input=description
+        elif shape == "rectangle":
+            messageData.append({"message": complete_sentence})
+            from .drawShapes import draw_rectangle
+            messageData = draw_rectangle(messageData, data_input)
+            start_len = len(messageData)
+            if Non_English and detected_language != "en":
+                from .utils import translate_text
 
+                def _tx(s: str) -> str:
+                    try:
+                        tr = translate_text(s,
+                                            target_language=detected_language)  # detected_language is a CODE like 'fr'
+                        return getattr(tr, "text", None) or s
+                    except Exception:
+                        return s
 
-            query=description
-            results= google_search_image(query)
-            # print("dataDected", data_input)
-            print("results", results)
-            if isinstance(results, list):
-                for index, result in enumerate(results):
-                    link = result.get("link") if isinstance(result, dict) else "result"
-                    if not link:
-                        link = "None"
-                    label = f"image{index + 1}:link"
-                    print(label, link)
-                    messageData.append({
-                        "image_url": link,
-                        "label": label
-                    })
+                # Translate strings in the items added by draw_square
+                for i in range(start_len, len(messageData)):
+                    item = messageData[i]
+                    if isinstance(item, dict):
+                        # translate top-level string fields
+                        for k, v in list(item.items()):
+                            if isinstance(v, str):
+                                item[k] = _tx(v)
+                            elif isinstance(v, dict):
+                                # translate strings one level deep (e.g., solution subfields)
+                                item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                            elif isinstance(v, list):
+                                item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                    elif isinstance(item, str):
+                        messageData[i] = _tx(item)
 
-                # Append the message only once after processing all items
-                message = "Which of the following images  would you like me to draw for you?"
-                messageData.append({"last_Data": message})
+            request.session['messageData'] = messageData
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
+        elif shape == "circle":
+            from .drawShapes import draw_circle
+            messageData = draw_circle(messageData, data_input)
+            start_len = len(messageData)
+            if Non_English and detected_language != "en":
+                from .utils import translate_text
 
+                def _tx(s: str) -> str:
+                    try:
+                        tr = translate_text(s,
+                                            target_language=detected_language)  # detected_language is a CODE like 'fr'
+                        return getattr(tr, "text", None) or s
+                    except Exception:
+                        return s
 
-        elif match_draw_shapes:
-            messageData = request.session.get('messageData', [])
-            shapes = match_draw_shapes.group(1).lower().rstrip('s')
+                # Translate strings in the items added by draw_square
+                for i in range(start_len, len(messageData)):
+                    item = messageData[i]
+                    if isinstance(item, dict):
+                        # translate top-level string fields
+                        for k, v in list(item.items()):
+                            if isinstance(v, str):
+                                item[k] = _tx(v)
+                            elif isinstance(v, dict):
+                                # translate strings one level deep (e.g., solution subfields)
+                                item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                            elif isinstance(v, list):
+                                item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                    elif isinstance(item, str):
+                        messageData[i] = _tx(item)
 
-
-
-
-
-            if  shapes=="triangle":
-                messageData.append({"message": complete_sentence})
-                from .drawShapes import draw_triangle
-                messageData = draw_triangle(messageData,data_input)
-
-            elif  shapes=="square" :
-                messageData.append({"message": complete_sentence})
-                from .drawShapes import draw_square
-                messageData = draw_square(messageData,data_input)
-                # request.session['messageData'] = messageData
-                return render(request, 'myFileReader/index.html', {'messageData': messageData})
-            elif shapes=="rectangle" :
-                messageData.append({"message": complete_sentence})
-                from .drawShapes import draw_rectangle
-                messageData = draw_rectangle(messageData ,data_input)
-                # request.session['messageData'] = messageData
-                return render(request, 'myFileReader/index.html', {'messageData': messageData})
-            elif shapes=="circle" :
-                from .drawShapes import draw_circle
-                messageData = draw_circle(messageData ,data_input)
-                # request.session['messageData'] = messageData
-                return render(request, 'myFileReader/index.html', {'messageData': messageData})
+            request.session['messageData'] = messageData
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
 
+    # ---- 11) Translate-on-command ("translate ... into <lang>") ----
+    if match_translate_Data:
+        from .utils import translate_text
+        cleaned_sentence = re.sub(
+            r'\b(translate|can you|can|into|please|in|to)\b',
+            '',
+            data_input,
+            flags=re.IGNORECASE
+        ).strip()
 
+        words = cleaned_sentence.lower().split()
+        last_word = words[-1] if words else ''
+        last_two_words = " ".join(words[-2:]) if len(words) >= 2 else last_word
 
+        detected_target = None
+        phrase = cleaned_sentence.lower()
 
+        for code, name in LANGUAGES.items():
+            name_lower = name.lower()
+            if last_word == name_lower or last_two_words == name_lower or last_word == code.lower():
+                detected_target = code
+                if name_lower in phrase:
+                    phrase = phrase.replace(name_lower, '').strip()
+                elif code.lower() in phrase:
+                    phrase = phrase.replace(code.lower(), '').strip()
+                break
 
-
-        elif match_translate_Data:
-            messageData = request.session.get('messageData', [])
-            from .utils import translate_text
-
-            cleaned_sentence = re.sub(
-                r'\b(translate|can you|can|into|please|in)\b',
-                '',
-                data_input,
-                flags=re.IGNORECASE
-            ).strip()
-            print("cleaned_sentence", cleaned_sentence)
-            cleaned_sentence_lower = cleaned_sentence.lower().strip()
-
-            # Split into words to get the last one (or last two)
-            words = cleaned_sentence_lower.split()
-            last_word = words[-1] if words else ''
-            last_two_words = " ".join(words[-2:]) if len(words) >= 2 else last_word
-
-            detected_language = None
-            phrase = cleaned_sentence_lower
-
-            print("last_word", phrase)
-
-            for code, name in LANGUAGES.items():
-                name_lower = name.lower()
-
-                # Match by name or code
-                if last_word == name_lower or last_two_words == name_lower or last_word == code.lower():
-                    detected_language = code
-                    # Remove the language from the phrase
-                    if name_lower in cleaned_sentence_lower:
-                        phrase = cleaned_sentence_lower.replace(name_lower, '').strip()
-                    elif code.lower() in cleaned_sentence_lower:
-                        phrase = cleaned_sentence_lower.replace(code.lower(), '').strip()
-
-                    break
-
-
-            if detected_language:
-
-                translator= translate_text(phrase,target_language=detected_language)
-                translator.text = translator.text
-                translator.src = translator.src
-                translator.dest = translator.dest
-                trans_message = {
-                    # "message": f"This is written in {LANGUAGES[detected_language]}",
-                    "user_input": data_input,
-                    "translator": f"This is the translated sentence into {LANGUAGES[detected_language]}:",
-                    "translator_text": translator.text
-                }
-
-
-                messageData.append({"translated": trans_message})
-                request.session['messageData'] = messageData
-
-                print("✅ Detected language:", LANGUAGES[detected_language])
-                print("📝 Language code:", detected_language)
-                print("🗣️ Phrase to translate:", phrase)
-            else:
-                print("❌ Could not detect language.")
-                message="This language is not supported yet. Please try again with a different language."
-                messageData.append({"message": message})
-                if len(messageData) >= 2:
-                    last_before = messageData[-2]
-                    file_data = last_before.get("fileData", {})
-                    print("last_before", last_before)
-                    print("✅ This is the data before the translated version:")
-                    print("Main Header:", file_data.get("mainHeader"))
-                    print("paragraphs:", file_data.get("paragraph"))
-                    print("Message:", file_data.get("message"))
-                        #
+        if detected_target:
+            tr_out = translate_text(phrase, target_language=detected_target)
+            trans_message = {
+                "user_input": original_input,
+                "translator": f"This is the translated sentence into {LANGUAGES[detected_target]}:",
+                "translator_text": getattr(tr_out, "text", None) or phrase
+            }
+            messageData.append({"translated": trans_message})
+            request.session['messageData'] = messageData
+            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+        else:
+            # If user asked translation but we couldn't detect target, try translating last fileData to English as fallback
+            messageData.append({"message": "This language is not supported yet. Please try again with a different language."})
+            if len(messageData) >= 2:
+                last_before = messageData[-2]
+                file_data = last_before.get("fileData", {})
+                if file_data:
                     translated_paragraphs = [translate_text(p, 'en') for p in file_data.get("paragraph", [])]
                     translated_bullets = [translate_text(b, 'en') for b in file_data.get("bullets", [])]
-                    translated_header =[translate_text(h, 'en') for h in file_data.get("header", [])]
-                    translated_title=[translate_text(t, 'en') for t in file_data.get("title", [])]
-                    translated_tables=[translate_text(tb,'en') for tb in file_data.get("tables", []) ]
+                    translated_header = [translate_text(h, 'en') for h in file_data.get("header", [])]
+                    translated_title = [translate_text(t, 'en') for t in file_data.get("title", [])]
+                    translated_tables = [translate_text(tb, 'en') for tb in file_data.get("tables", [])]
                     content = {
-                         "mainHeader": translated_header,
-                         "title": translated_title,
-                         "paragraph": translated_paragraphs,
+                        "mainHeader": translated_header,
+                        "title": translated_title,
+                        "paragraph": translated_paragraphs,
                         "bullets": translated_bullets,
                         "table": translated_tables,
                         "message": "Here is the translated version of the document."
-                     }
-                    print({"data is file":content})
-
+                    }
                     messageData.append(content)
-                    # request.session['messageData'] = messageData
+                    request.session['messageData'] = messageData
                     return render(request, 'myFileReader/index.html', {'messageData': messageData})
-                else:
-
-                   print("Not enough entries in messageData.")
-
-        elif match_disease:
-            messageData = request.session.get('messageData', [])
-
-            # Import your model or function that handles disease prediction
-            from .disease import disease_model  # assuming disease_model is a function
-
-            # Use the model to update messageData
-            updated_messageData = disease_model(data_input, messageData)
-
-            # Save updated data in session
-            request.session["messageData"] = updated_messageData
-
-            # Render with updated context
-            return render(request, 'myFileReader/index.html', {'messageData': updated_messageData})
-
-        elif Bar_match:
-            from .utils import generate_barChart
-            messageData = request.session.get('messageData', [])
-            messageData=generate_barChart(data_input,messageData, request.session['messageData'])
+            request.session['messageData'] = messageData
             return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-                # LINEAR EQUATIO
-        elif match_linear:
-            from .utils import linear_equation
+    # ---- 12) Disease helper ----
+    if match_disease:
+        from .disease import disease_model
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
+
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
+
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
 
 
-            print("data_input",data_input)
-            messageData = request.session.get('messageData', [])
-            messageData=linear_equation(data_input,match_linear, messageData, request.session['messageData'])
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+        updated_messageData = disease_model(data_input, messageData)
+        request.session["messageData"] = updated_messageData
+        return render(request, 'myFileReader/index.html', {'messageData': updated_messageData})
 
-        elif match_quadratic:
-            from .utils import quadratic
-            messageData = request.session.get('messageData', [])
-            messageData=quadratic(data_input,match_quadratic,messageData, request.session['messageData'])
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
+    # ---- 13) Bar chart ----
+    if Bar_match:
+        from .utils import generate_barChart
+        messageData = generate_barChart(data_input, messageData, request.session.get('messageData', []))
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
 
-        elif match_quadratic_two:
-            from .utils import quadratic_two
-            messageData = request.session.get('messageData', [])
-            messageData=quadratic_two(data_input,match_quadratic_two,messageData, request.session['messageData'])
-            return render(request, 'myFileReader/index.html', {'messageData': messageData})
-        elif match_summarise:
-            from .utils import summarise_message
-            messageData = request.session.get('messageData', [])
-            messageData=summarise_message(data_input,messageData)
-        else:
-            from .utils import google_search
-            messageData = request.session.get('messageData', [])
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
 
-            findOne = "(how do|what's the method for) calculating the area of a triangle\??"
-            findTwo = "how can I (find|calculate) the area of a triangle\??"
-            findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
-            findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
-
-
-
-            # Check for subject, verb, and object
-
-            # If messageInfo was set (i.e., prediction succeeded)
-            if messageInfo:
-                messageData.append({"message": messageInfo})
-                # request.session["messageData"] = messageData
-                return render(request, 'myFileReader/index.html', {'messageData': messageData})
-
-            # If prediction did not occur (fallback to pattern matching)
-            from .chat import pairs
-            if matches_none_English:
-                from .utils import translate_text
-                detected_language = None
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
 
 
-                for code, name in LANGUAGES.items():
-                    name_lower = name.lower()
-                    detected_language=code
-                    print("detected_language",detected_language)
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-                full_language_name = langcodes.Language.get(detect_language).language_name()
-                print(full_language_name)
-                translator = translate_text(data_input, target_language="en")
+    # ---- 14) Linear / Quadratic equations ----
+    if match_linear:
+        from .utils import linear_equation
+        messageData = linear_equation(data_input, match_linear, messageData, request.session.get('messageData', []))
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
 
-                translator.text = translator.text
-                translator.src = translator.src
-                translator.dest = translator.dest
-                print("text", translator.text)
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
+
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
 
 
-                messageData = request.session.get('messageData', [])
-                pairs= pairs
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
-                patterns = [pattern for pattern, _ in pairs]
+    if match_quadratic:
+        from .utils import quadratic
+        messageData = quadratic(data_input, match_quadratic, messageData, request.session.get('messageData', []))
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
 
-                best_match, score, _ = process.extractOne(translator.text, patterns, scorer=fuzz.partial_ratio)
-                print("bess",best_match)
-                print(score)
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
+
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
 
 
-            # If a pattern match is found
-                if score > 75:
-                  for pattern, response in pairs:
+
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    if match_quadratic_two:
+        from .utils import quadratic_two
+        messageData = quadratic_two(data_input, match_quadratic_two, messageData, request.session.get('messageData', []))
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
+
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
+
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
+
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+
+    # ---- 15) Summarise ----
+    if match_summarise:
+        from .utils import summarise_message
+        messageData = summarise_message(data_input, messageData)
+        request.session['messageData'] = messageData
+        start_len = len(messageData)
+        if Non_English and detected_language != "en":
+            from .utils import translate_text
+
+            def _tx(s: str) -> str:
+                try:
+                    tr = translate_text(s,
+                                        target_language=detected_language)  # detected_language is a CODE like 'fr'
+                    return getattr(tr, "text", None) or s
+                except Exception:
+                    return s
+
+            # Translate strings in the items added by draw_square
+            for i in range(start_len, len(messageData)):
+                item = messageData[i]
+                if isinstance(item, dict):
+                    # translate top-level string fields
+                    for k, v in list(item.items()):
+                        if isinstance(v, str):
+                            item[k] = _tx(v)
+                        elif isinstance(v, dict):
+                            # translate strings one level deep (e.g., solution subfields)
+                            item[k] = {kk: _tx(vv) if isinstance(vv, str) else vv for kk, vv in v.items()}
+                        elif isinstance(v, list):
+                            item[k] = [_tx(x) if isinstance(x, str) else x for x in v]
+                elif isinstance(item, str):
+                    messageData[i] = _tx(item)
+
+        request.session['messageData'] = messageData
+
+
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+    try:
+        # Ensure list
+        messageData = request.session.get('messageData', [])
+        if not isinstance(messageData, list):
+            messageData = [messageData] if isinstance(messageData, dict) else []
+
+        from .chat import pairs
+        patterns = [pattern for pattern, _ in pairs]
+
+        extracted = process.extractOne(data_input, patterns, scorer=fuzz.partial_ratio)
+        if extracted:
+            best_match, score, _ = extracted
+            print("bess", best_match)
+            print(score)
+
+            if score > 65:
+                # Find mapped response (English)
+                resp_en = None
+                for pattern, response in pairs:
                     if pattern == best_match:
+                        resp_en = response[0] if isinstance(response, (list, tuple)) and response else str(response)
+                        break
 
-                        translator = translate_text(response[0], target_language=full_language_name)
-                        translator.text = translator.text
-                        translator.src = translator.src
-                        print("textDD", translator.text)
-                        messageData.append({"message": translator.text})
+                if resp_en is None:
+                    messageData.append({"message": "Matched, but no response found."})
+                else:
+                    # Translate back to user's language if original wasn't English
+                    resp_out = resp_en
+                    if Non_English and detected_language and detected_language.lower() != "en":
+                        try:
+                            from .utils import translate_text
+                            tr = translate_text(resp_en, target_language=detected_language.lower())
+                            resp_out = getattr(tr, "text", None) or (tr if isinstance(tr, str) else resp_en)
+                        except Exception as e:
+                            print("Back-translation failed:", e)
 
-                        request.session['messageData'] = messageData
+                    # Append exactly one message
+                    messageData.append({"message": resp_out})
 
-                        weather_pattern = r"""(?ix)                 # ignore case, allow verbose mode
-                            \b(
-                                (what('|s| is)?\s*(the\s*)?(weather|forecast|weather\s+report)) |
-                                (can|could|will|would|do|does)\s+you\s+(tell|give)\s+me\s+(the\s*)?(weather|forecast) |
-                                (is|was|will|would|does|do|did|are|am|were|being|be|has|have|had)\s+(it|the\s+weather)\s+(like|raining|snowing|sunny|cloudy|hot|cold|windy|nice) |
-                                (rain|snow|sun|sunny|clouds|cloudy|storm|hot|cold|temperature|windy|humidity)
-                            )
-                            (
-                                \s+(today|tomorrow|tonight|this\s+(morning|afternoon|evening|weekend)|on\s+\w+day)?
-                            )?
-                            (
-                                \s+(in|for)\s+[a-zA-Z\s]+     # simple location capture
-                            )?
-                            \??
-                        """
-                        findOne = "(how do|what's the method for) calculating the area of a triangle\??"
-                        findTwo = "how can I (find|calculate) the area of a triangle\??"
-                        findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
-                        findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
-
-
-
-
-
-                        search_weather_pattern= re.search(weather_pattern, best_match, re.IGNORECASE)
-
-
-                        if search_weather_pattern  or "weather"  in response[0].lower():
-                            from .api import get_weather, get_location
-                            city = get_location()
-
-                            if city:
-                                weather = get_weather(city)
-                                print("weather", weather)
-                                messageData.append({"weather": weather})
-                                # request.session['messageData'] = messageData
-
-
-                        elif best_match == findOne or best_match == findTwo:
-                            from .drawShapes import draw_triangle
-                            messageData = draw_triangle(messageData,data_input)
-                            # request.session['messageData'] = messageData
-
-                        elif best_match == findRectangleTwo:
-                             from .drawShapes import draw_rectangle
-                             messageData = draw_rectangle(messageData,data_input)
-                             messageData.append(messageData)
-                             # request.session['messageData'] = messageData
-
-
-
-
-
-                        return render(request, 'myFileReader/index.html', {'messageData': messageData})
-            else:
-                    messageData = request.session.get('messageData', [])
-                    pairs = pairs
-
-                    patterns = [pattern for pattern, _ in pairs]
-
-                    best_match, score, _ = process.extractOne(data_input, patterns, scorer=fuzz.partial_ratio)
-                    print("bess", best_match)
-                    print(score)
-
-                    # If a pattern match is found
-                    if score > 75:
-                        for pattern, response in pairs:
-                            if pattern == best_match:
-
-                                messageData.append({"message": response[0]})
-                                request.session['messageData'] = messageData
-
-                                weather_pattern = r"""(?ix)                 # ignore case, allow verbose mode
-                                                \b(
-                                                    (what('|s| is)?\s*(the\s*)?(weather|forecast|weather\s+report)) |
-                                                    (can|could|will|would|do|does)\s+you\s+(tell|give)\s+me\s+(the\s*)?(weather|forecast) |
-                                                    (is|was|will|would|does|do|did|are|am|were|being|be|has|have|had)\s+(it|the\s+weather)\s+(like|raining|snowing|sunny|cloudy|hot|cold|windy|nice) |
-                                                    (rain|snow|sun|sunny|clouds|cloudy|storm|hot|cold|temperature|windy|humidity)
-                                                )
-                                                (
-                                                    \s+(today|tomorrow|tonight|this\s+(morning|afternoon|evening|weekend)|on\s+\w+day)?
-                                                )?
-                                                (
-                                                    \s+(in|for)\s+[a-zA-Z\s]+     # simple location capture
-                                                )?
-                                                \??
-                                            """
-                                findOne = "(how do|what's the method for) calculating the area of a triangle\??"
-                                findTwo = "how can I (find|calculate) the area of a triangle\??"
-                                findRectangle = "(how do|what's the method for) calculating the area of a rectangle\??"
-                                findRectangleTwo = " how can I (find|calculate) the area of a rectangle\??"
-
-                                search_weather_pattern = re.search(weather_pattern, best_match, re.IGNORECASE)
-
-                                if search_weather_pattern or "weather" in response[0].lower():
-                                    from .api import get_weather, get_location
-                                    city = get_location()
-
-                                    if city:
-                                        weather = get_weather(city)
-                                        print("weather", weather)
-                                        messageData.append({"weather": weather})
-                                        # request.session['messageData'] = messageData
-
-
-                                elif best_match == findOne or best_match == findTwo:
-                                    from .drawShapes import draw_triangle
-                                    messageData = draw_triangle(messageData, data_input)
-                                    # request.session['messageData'] = messageData
-
-                                elif best_match == findRectangleTwo:
-                                    from .drawShapes import draw_rectangle
-                                    messageData = draw_rectangle(messageData, data_input)
-                                    messageData.append(messageData)
-                                    # request.session['messageData'] = messageData
-
-                                return render(request, 'myFileReader/index.html', {'messageData': messageData})
-
-        # 🔹 Predict missing word
-
-            from .utils import google_search
-            query = data_input
-            results = google_search(query)
-            messageData = request.session.get('messageData', [])
-
-
-            if isinstance(results, list):
-                for idx, result in enumerate(results):
-                    title = result.get('title', 'No Title')
-                    snippet = result.get('snippet', 'No snippet available')
-                    link = result.get('link', 'No link available')
-                    logo = result.get("pagemap", {}).get("cse_image", [{}])[0].get("src", "No logo available")
-
-                    message = (f"{idx + 1}. {title}\n📌 {snippet}\n🔗 {link}\n🖼️ Logo: {logo}\n")
-                    print(message)
+                    # ---- Optional tool routing based on EN user text (data_input) ----
+                    weather_pattern = r"""(?ix)
+                        \b(
+                            (what('|s| is)?\s*(the\s*)?(weather|forecast|weather\s+report)) |
+                            (can|could|will|would|do|does)\s+you\s+(tell|give)\s+me\s+(the\s*)?(weather|forecast) |
+                            (is|was|will|would|does|do|did|are|am|were|being|be|has|have|had)\s+(it|the\s+weather)\s+(like|raining|snowing|sunny|cloudy|hot|cold|windy|nice) |
+                            (rain|snow|sun|sunny|clouds|cloudy|storm|hot|cold|temperature|windy|humidity)
+                        )
+                        (\s+(today|tomorrow|tonight|this\s+(morning|afternoon|evening|weekend)|on\s+\w+day)?)?
+                        (\s+(in|for)\s+[a-zA-Z\s]+)?
+                        \??
+                    """
 
                     try:
-                        headers = {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                        }
-                        response = requests.get(link, headers=headers, timeout=5)
+                        if re.search(weather_pattern, data_input):
+                            from .api import get_weather, get_location
+                            city = get_location()
+                            if city:
+                                weather = get_weather(city)
+                                messageData.append({"weather": weather})
 
-                        if response.status_code == 200:
-                            soup = BeautifulSoup(response.text, "html.parser")
-                            headlines = [h1.get_text(strip=True) for h1 in soup.find_all("h1")][:3]
-                            paragraphs = [p.get_text(strip=True) for p in soup.find_all("p")][:5]
+                        elif re.search(r"(triangle).*(area)|(area).*(triangle)", data_input, re.I):
+                            from .drawShapes import draw_triangle
+                            messageData = draw_triangle(messageData, data_input)
 
-                            mainHeader = headlines[0] if headlines else "No headline found"
-                            paragraph = [f"{i}. {p}" for i, p in enumerate(paragraphs, start=1)] if paragraphs else [
-                                "No content found"]
-
-                            content = {
-                                "mainHeader": mainHeader,
-                                "search": data_input,
-                                "paragraph": paragraph,
-                                "title": title,
-                                "snippet": snippet,
-                                "link": link,
-                                "logo": logo,
-                            }
-                            print("content",content)
-                            messageData.append({"website": content})
-                            request.session["messageData"] = messageData
+                        elif re.search(r"(rectangle).*(area)|(area).*(rectangle)", data_input, re.I):
+                            from .drawShapes import draw_rectangle
+                            messageData = draw_rectangle(messageData, data_input)
 
                     except Exception as e:
-                        print(f"Error fetching content from {link}: {e}")
+                        messageData.append({"message": f"Tool routing failed: {e}"})
 
-            # Store all results in session after processing
+                request.session['messageData'] = messageData
+                return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+        # No extraction / low score path falls through
+    except Exception as e:
+        messageData.append({'message': str(e)})
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    # ---- 16) Pairs fuzzy matching + optional tool routing ----
 
 
+    # ---- 17) Google Search fallback ----
+    try:
+        from .utils import google_search, translate_text
+        results = google_search(data_input)
 
+        if isinstance(results, list):
+            # helper: deep-translate any str/list/dict into detected_language
+            def _tx_value(v):
+                if isinstance(v, str):
+                    try:
+                        tr = translate_text(v, target_language=detected_language)
+                        return getattr(tr, "text", None) or v
+                    except Exception:
+                        return v
+                if isinstance(v, list):
+                    return [_tx_value(x) for x in v]
+                if isinstance(v, dict):
+                    return {k: _tx_value(val) for k, val in v.items()}
+                return v
 
+            for idx, res in enumerate(results):
+                title = res.get('title', 'No Title')
+                snippet = res.get('snippet', 'No snippet available')
+                link = res.get('link', '')
+                logo = res.get("pagemap", {}).get("cse_image", [{}])[0].get("src", "")
 
+                # Skip bad/empty links
+                if not link or not link.startswith(("http://", "https://")):
+                    continue
 
-                # Set messageInfo if prediction is successful
+                print(f"{idx + 1}. {title}\n📌 {snippet}\n🔗 {link}\n🖼️ Logo: {logo}\n")
 
+                # try to fetch extra text from the page (optional)
+                try:
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                    }
+                    response = requests.get(link, headers=headers, timeout=5)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.text, "html.parser")
+                        headlines = [h1.get_text(strip=True) for h1 in soup.find_all("h1")][:3]
+                        paragraphs = [p.get_text(strip=True) for p in soup.find_all("p")][:5]
+                    else:
+                        headlines, paragraphs = [], []
+                except Exception as e:
+                    print(f"Error fetching content from {link}: {e}")
+                    headlines, paragraphs = [], []
+
+                mainHeader = headlines[0] if headlines else "No headline found"
+                paragraph = [f"{i}. {p}" for i, p in enumerate(paragraphs, start=1)] if paragraphs else [
+                    "No content found"]
+
+                content = {
+                    "mainHeader": mainHeader,
+                    "search": data_input,  # this is already English per your earlier translation
+                    "paragraph": paragraph,
+                    "title": title,
+                    "snippet": snippet,
+                    "link": link,
+                    "logo": logo,
+                }
+
+                # If original input wasn't English, translate *this content* to the user's language
+                if Non_English and detected_language != "en":
+                    content = _tx_value(content)
+
+                # NOW append the website card
+                messageData.append({"website": content})
+
+                # If you only want the first result, uncomment:
+                # break
+
+        request.session['messageData'] = messageData
+        return render(request, 'myFileReader/index.html', {'messageData': messageData})
+
+    except Exception as e:
+        messageData.append({"message": f"Search failed: {e}"})
+        request.session['messageData'] = messageData
         return render(request, 'myFileReader/index.html', {'messageData': messageData})
 
 
