@@ -15,7 +15,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 SECRET_KEY = 'django-insecure-vj1rud37wngvgw11%3(b12-*m3)_2a0x=!*b8x%er3dr5!s6#+'
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'filereaderapp-production.up.railway.app', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'filereaderapp-production-a078.up.railway.app', 'localhost']
 
 # ✅ API keys from environment
 LOCATION_KEY = os.getenv('LOCATION_KEY')
