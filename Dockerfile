@@ -54,7 +54,7 @@ RUN pip install --no-cache-dir \
     tensorflow==2.19.0 \
     
     langcodes==3.5.0 \
-    tf-keras==2.19.0
+    keras==3.10.0
 
 # Download spaCy model
 RUN python -m spacy download en_core_web_sm
