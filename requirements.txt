@@ -158,5 +158,6 @@ wheel==0.45.1
 wrapt==1.17.2
 xxhash==3.5.0
 yarl==1.20.1
-tf-keras==2.15.0
+tf-keras====2.19.0
+
 
