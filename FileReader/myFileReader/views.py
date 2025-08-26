@@ -765,7 +765,7 @@ def submit_message(request):
             print("bess", best_match)
             print(score)
 
-            if score > 65:
+            if score > 78:
                 # Find mapped response (English)
                 resp_en = None
                 for pattern, response in pairs:
