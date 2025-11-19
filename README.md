@@ -11,7 +11,7 @@ Students, researchers, and small teams often juggle multiple tools for text proc
 
 🔎 Entity Extraction & Summarization (spaCy, with safe fallback if model unavailable)
 
-🌍 Multilingual Translation – English, Greek, French, Arabic, and more (Deep Translator)
+Multilingual Translation – English, Greek, French, Arabic, and more (Deep Translator)
 
 🧮 Math Solver – Linear & quadratic equations with step-by-step solutions
 
@@ -19,7 +19,7 @@ Students, researchers, and small teams often juggle multiple tools for text proc
 
 📊 Quick Visuals – Bar charts, shapes (circle, square, triangle, rectangle) with area/perimeter
 
-🤒 Symptom → Condition Demo – Educational predictions with precautions (toy dataset)
+ Symptom → Condition Demo – Educational predictions with precautions (toy dataset)
 
 🌐 Web Search Fallback – Query DuckDuckGo HTML (no API key required)
 
