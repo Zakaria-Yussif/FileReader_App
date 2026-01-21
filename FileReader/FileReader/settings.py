@@ -1,17 +1,17 @@
 from pathlib import Path
 import os
 
-# ✅ Make BASE_DIR a Path object
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ✅ MEDIA and STATIC paths
+#  MEDIA and STATIC paths
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# ✅ SECRET_KEY and DEBUG
+#  SECRET_KEY and DEBUG
 SECRET_KEY = 'django-insecure-vj1rud37wngvgw11%3(b12-*m3)_2a0x=!*b8x%er3dr5!s6#+'
 DEBUG = True
 
@@ -26,13 +26,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://filereaderapp-production-a078.up.railway.app",
     "https://*.up.railway.app",
 ]
-# ✅ API keys from environment
+# API keys from environment
 LOCATION_KEY = os.getenv('LOCATION_KEY')
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 CSE_ID = os.getenv('CSE_ID')
 
-# ✅ Installed apps
+#  Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -54,10 +54,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ✅ URL config
+#  URL config
 ROOT_URLCONF = 'FileReader.FileReader.urls'
 
-# ✅ Templates
+#  Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,10 +73,10 @@ TEMPLATES = [
     },
 ]
 
-# ✅ WSGI
+#  WSGI
 WSGI_APPLICATION = 'FileReader.wsgi.application'
 
-# ✅ Database
+#  Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -84,7 +84,7 @@ DATABASES = {
     }
 }
 
-# ✅ Password validation
+#  Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -100,11 +100,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# ✅ Internationalization
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# ✅ Primary key
+#  Primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
